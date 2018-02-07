@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: A stack for deploying containerized applications in AWS Fargate.
-             This stack runs containers in a public VPC subnet, and includes a
-             public facing load balancer to register the services in.
+Description: The baseline resources used to create a Fargate environment
+             to launch containerized applications in.
 Parameters:
   EnvironmentName:
     Type: String
@@ -147,8 +146,8 @@ Resources:
     Properties:
       Scheme: internet-facing
       LoadBalancerAttributes:
-      - Key: idle_timeout.timeout_seconds
-        Value: '30'
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
       Subnets:
         # The load balancer is placed into the public subnets, so that traffic
         # from the internet can reach the load balancer directly via the internet gateway
@@ -249,6 +248,31 @@ Resources:
                 - 'logs:PutLogEvents'
               Resource: '*'
 
+  # A role used by AWS Autoscaling to get the stats for a Fargate
+  # service, and update it to increase or decrease the number of containers
+  AutoscalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [application-autoscaling.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: service-autoscaling
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - 'application-autoscaling:*'
+              - 'cloudwatch:DescribeAlarms'
+              - 'cloudwatch:PutMetricAlarm'
+              - 'ecs:DescribeServices'
+              - 'ecs:UpdateService'
+            Resource: '*'
+
 # These are the values output by the CloudFormation template. Be careful
 # about changing any of them, because of them are exported with specific
 # names so that the other task related CF templates can use them.
@@ -273,6 +297,11 @@ Outputs:
     Value: !GetAtt 'ECSTaskExecutionRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ECSTaskExecutionRole' ] ]
+  AutoscalingRole:
+    Description: The ARN of the ECS role
+    Value: !GetAtt 'ECSTaskExecutionRole.Arn'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'AutoscalingRole' ] ]
   PublicListener:
     Description: The ARN of the public load balancer's Listener
     Value: !Ref PublicLoadBalancerListener

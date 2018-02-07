@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: The bonus resources for the chat application.
+Description: Redis, and any other resources that the chat app needs.
 Parameters:
   EnvironmentName:
     Type: String
