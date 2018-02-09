@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Redis, and any other resources that the chat app needs.
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    Description: The environment name, used for locating outputs from the
+                 prerequisite stacks
+Resources:
+  # Subnet group to control where the Redis gets placed
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Group of subnets to place Redis into
+      SubnetIds:
+        - Fn::ImportValue:
+            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
+        - Fn::ImportValue:
+            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+
+  # Security group to add the Redis cluster to the VPC,
+  # and to allow the Fargate containers to talk to Redis on port 6379
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Redis Security Group"
+      VpcId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+  RedisIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from Fargate containers
+      GroupId: !Ref 'RedisSecurityGroup'
+      IpProtocol: tcp
+      FromPort: 6379
+      ToPort: 6379
+      SourceSecurityGroupId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'FargateContainerSecurityGroup']]
+
+  # The cluster itself.
+  Redis:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      Engine: redis
+      CacheNodeType: cache.m4.large
+      NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref 'RedisSubnetGroup'
+      VpcSecurityGroupIds:
+        - !GetAtt 'RedisSecurityGroup.GroupId'
+
+Outputs:
+  RedisEndpoint:
+    Description: The endpoint of the redis cluster
+    Value: !GetAtt 'Redis.RedisEndpoint.Address'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'RedisEndpoint' ] ]
+
