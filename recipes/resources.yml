@@ -50,6 +50,67 @@ Resources:
       VpcSecurityGroupIds:
         - !GetAtt 'RedisSecurityGroup.GroupId'
 
+  # Table for storing user info
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['_', [!Ref 'EnvironmentName', 'Users']]
+      AttributeDefinitions:
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 10
+
+  # Table for storing the messages
+  MessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['_', [!Ref 'EnvironmentName', 'Messages']]
+      AttributeDefinitions:
+        - AttributeName: room
+          AttributeType: S
+        - AttributeName: message
+          AttributeType: S
+      KeySchema:
+        - AttributeName: room
+          KeyType: HASH
+        - AttributeName: message
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 10
+
+  # A role for the service so it can access the tables
+  ChatServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: "ecs-tasks.amazonaws.com"
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: users-dynamodb-table
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - "dynamodb:PutItem"
+              - "dynamodb:GetItem"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
+            Resource:
+              - !Join ['', ['arn:aws:dynamodb:::table/', !Ref 'UsersTable']]
+              - !Join ['', ['arn:aws:dynamodb:::table/', !Ref 'MessagesTable']]
+
 Outputs:
   RedisEndpoint:
     Description: The endpoint of the redis cluster

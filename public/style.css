@@ -1,149 +1,458 @@
-/* Fix user-agent */
+/* Styles based on https://bootsnipp.com/snippets/0e3Ma */
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  font-weight: 300;
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #4169AA;
+  font-family: "proxima-nova", "Source Sans Pro", sans-serif;
+  font-size: 1em;
+  letter-spacing: 0.1px;
+  color: #32465a;
+  text-rendering: optimizeLegibility;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
   -webkit-font-smoothing: antialiased;
 }
 
-html, input {
-  font-family:
-    "HelveticaNeue-Light",
-    "Helvetica Neue Light",
-    "Helvetica Neue",
-    Helvetica,
-    Arial,
-    "Lucida Grande",
-    sans-serif;
+#frame {
+  width: 95%;
+  min-width: 360px;
+  max-width: 1000px;
+  height: 100vh;
+  min-height: 300px;
+  background: #E6EAEA;
+}
+@media screen and (max-width: 360px) {
+  #frame {
+    width: 100%;
+    height: 100vh;
+  }
 }
 
-html, body {
+#frame #sidepanel {
+  float: left;
+  min-width: 280px;
+  max-width: 340px;
+  width: 40%;
   height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-ul {
-  list-style: none;
-  word-wrap: break-word;
-}
-
-/* Pages */
-
-.pages {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
-
-.page {
-  height: 100%;
-  position: absolute;
-  width: 100%;
-}
-
-/* Login Page */
-
-.login.page {
-  background-color: #000;
-}
-
-.login.page .form {
-  height: 100px;
-  margin-top: -100px;
-  position: absolute;
-
-  text-align: center;
-  top: 50%;
-  width: 100%;
-}
-
-.login.page .form .usernameInput {
-  background-color: transparent;
-  border: none;
-  border-bottom: 2px solid #fff;
-  outline: none;
-  padding-bottom: 15px;
-  text-align: center;
-  width: 400px;
-}
-
-.login.page .title {
-  font-size: 200%;
-}
-
-.login.page .usernameInput {
-  font-size: 200%;
-  letter-spacing: 3px;
-}
-
-.login.page .title, .login.page .usernameInput {
-  color: #fff;
-  font-weight: 100;
-}
-
-/* Chat page */
-
-.chat.page {
-  display: none;
-}
-
-/* Font */
-
-.messages {
-  font-size: 150%;
-}
-
-.inputMessage {
-  font-size: 100%;
-}
-
-.log {
-  color: gray;
-  font-size: 70%;
-  margin: 5px;
-  text-align: center;
-}
-
-/* Messages */
-
-.chatArea {
-  height: 100%;
-  padding-bottom: 60px;
-}
-
-.messages {
-  height: 100%;
-  margin: 0;
-  overflow-y: scroll;
-  padding: 10px 20px 10px 20px;
-}
-
-.message.typing .messageBody {
-  color: gray;
-}
-
-.username {
-  font-weight: 700;
+  background: #2c3e50;
+  color: #f5f5f5;
   overflow: hidden;
-  padding-right: 15px;
-  text-align: right;
+  position: relative;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel {
+    width: 58px;
+    min-width: 58px;
+  }
 }
 
-/* Input */
-
-.inputMessage {
-  border: 10px solid #000;
-  bottom: 0;
-  height: 60px;
-  left: 0;
-  outline: none;
-  padding-left: 10px;
-  position: absolute;
-  right: 0;
+#frame #sidepanel .rooms {
+  height: calc(100% - 177px);
+  overflow: hidden;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel .rooms {
+    height: calc(100% - 149px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+  #frame #sidepanel .rooms::-webkit-scrollbar {
+    display: none;
+  }
+}
+#frame #sidepanel .rooms.expanded {
+  height: calc(100% - 334px);
+}
+#frame #sidepanel .rooms ul {
+  margin: 0px;
+  padding: 0px;
   width: 100%;
+}
+#frame #sidepanel .rooms ul li.room {
+  position: relative;
+  padding: 10px 0 15px 0;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel .rooms ul li.room {
+    padding: 6px 0 46px 8px;
+  }
+}
+#frame #sidepanel .rooms ul li.room:hover {
+  background: #32465a;
+}
+#frame #sidepanel .rooms ul li.room.active {
+  background: #32465a;
+  border-right: 5px solid #435f7a;
+}
+#frame #sidepanel .rooms ul li.room.active span.room-status {
+  border: 2px solid #32465a !important;
+}
+#frame #sidepanel .rooms ul li.room .wrap {
+  width: 88%;
+  margin: 0 auto;
+  position: relative;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel .rooms ul li.room .wrap {
+    width: 100%;
+  }
+}
+#frame #sidepanel .rooms ul li.room .wrap span {
+  position: absolute;
+  left: 0;
+  margin: -2px 0 0 -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #2c3e50;
+  background: #95a5a6;
+}
+#frame #sidepanel .rooms ul li.room .wrap span.online {
+  background: #2ecc71;
+}
+#frame #sidepanel .rooms ul li.room .wrap span.away {
+  background: #f1c40f;
+}
+#frame #sidepanel .rooms ul li.room .wrap span.unread {
+  background: #e74c3c;
+}
+#frame #sidepanel .rooms ul li.room .wrap span.none {
+  background: transparent;
+  border: 0px transparent;
+}
+
+#frame #sidepanel .rooms ul li.room .wrap img {
+  width: 40px;
+  border-radius: 50%;
+  float: left;
+  margin-right: 10px;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel .rooms ul li.room .wrap img {
+    margin-right: 0px;
+  }
+}
+#frame #sidepanel .rooms ul li.room .wrap .meta {
+  padding: 5px 0 0 0;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel .rooms ul li.room .wrap .meta {
+    display: none;
+  }
+}
+#frame #sidepanel .rooms ul li.room .wrap .meta .name {
+  font-weight: 600;
+}
+#frame #sidepanel .rooms ul li.room .wrap .meta .preview {
+  margin: 5px 0 0 0;
+  padding: 0 0 1px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -moz-transition: 1s all ease;
+  -o-transition: 1s all ease;
+  -webkit-transition: 1s all ease;
+  transition: 1s all ease;
+}
+#frame #sidepanel .rooms ul li.room .wrap .meta .preview span {
+  position: initial;
+  border-radius: initial;
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0 0 0 1px;
+  opacity: .5;
+}
+
+
+#frame .content {
+  float: right;
+  width: 60%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+@media screen and (max-width: 735px) {
+  #frame .content {
+    width: calc(100% - 58px);
+    min-width: 300px !important;
+  }
+}
+@media screen and (min-width: 900px) {
+  #frame .content {
+    width: calc(100% - 340px);
+  }
+}
+#frame .content .room-details {
+  width: 100%;
+  height: 60px;
+  line-height: 60px;
+  background: #f5f5f5;
+}
+#frame .content .room-details img.description {
+  width: 40px;
+  border-radius: 50%;
+  float: left;
+  margin: 9px 12px 0 9px;
+}
+#frame .content .room-details p {
+  float: left;
+}
+#frame .content .room-details .online-count {
+  float: right;
+  margin-left: 14px;
+  margin-right: 20px;
+}
+
+#frame .content .messages {
+  height: auto;
+  min-height: calc(100% - 93px);
+  max-height: calc(100% - 93px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+@media screen and (max-width: 735px) {
+  #frame .content .messages {
+    max-height: calc(100% - 105px);
+  }
+}
+#frame .content .messages::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+#frame .content .messages::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+#frame .content .messages ul li {
+  display: inline-block;
+  clear: both;
+  float: left;
+  margin: 15px 15px 5px 15px;
+  width: calc(100% - 25px);
+  font-size: 0.9em;
+}
+#frame .content .messages ul li:nth-last-child(1) {
+  margin-bottom: 20px;
+}
+#frame .content .messages ul li.sent img {
+  margin: 6px 8px 0 0;
+}
+#frame .content .messages ul li.sent p {
+  background: #435f7a;
+  color: #f5f5f5;
+}
+#frame .content .messages ul li.replies img {
+  margin: 6px 8px 0 0;
+}
+#frame .content .messages ul li.replies p {
+  background: #f5f5f5;
+  float: left;
+}
+#frame .content .messages ul li img {
+  width: 22px;
+  border-radius: 50%;
+  float: left;
+}
+#frame .content .messages ul li p {
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: calc(100% - 45px);
+  line-height: 130%;
+  word-wrap:break-word;
+}
+#frame .content .message-input {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: 99;
+}
+#frame .content .message-input .wrap {
+  position: relative;
+}
+#frame .content .message-input .wrap input {
+  font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
+  float: left;
+  border: none;
+  width: calc(100% - 50px);
+  padding: 11px 32px 12px 8px;
+  font-size: 0.8em;
+  color: #32465a;
+}
+@media screen and (max-width: 735px) {
+  #frame .content .message-input .wrap input {
+    padding: 15px 32px 16px 8px;
+  }
+}
+#frame .content .message-input .wrap input:focus {
+  outline: none;
+}
+#frame .content .message-input .wrap button {
+  float: right;
+  border: none;
+  width: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  background: #32465a;
+  color: #f5f5f5;
+}
+@media screen and (max-width: 735px) {
+  #frame .content .message-input .wrap button {
+    padding: 16px 0;
+  }
+}
+#frame .content .message-input .wrap button:hover {
+  background: #435f7a;
+}
+#frame .content .message-input .wrap button:focus {
+  outline: none;
+}
+
+#frame .content .message-input-form {
+  background: white;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: 99;
+  padding-bottom: 15px;
+}
+
+#frame .content .message-input-form .wrap {
+  margin: 15px;
+}
+
+#frame .content .message-input-form .form-group {
+  margin: 0px;
+}
+
+#frame .content .message-input-form .input-group {
+  margin-bottom: 5px;
+}
+
+/* Typing indicator based on https://codepen.io/fusco/pen/XbpaYv */
+.typing-indicator {
+  float: left;
+  margin: 6px 0 0 8px;
+  background-color: #f5f5f5;
+  will-change: transform;
+  width: auto;
+  border-radius: 50px;
+  padding: 15px;
+  display: table;
+  margin: 0 auto;
+  position: relative;
+  -webkit-animation: 2s bulge infinite ease-out;
+          animation: 2s bulge infinite ease-out;
+}
+
+.typing-indicator span {
+  height: 5px;
+  width: 5px;
+  float: left;
+  margin: 0 1px;
+  background-color: #32465a;
+  display: block;
+  border-radius: 50%;
+  opacity: 0.4;
+}
+.typing-indicator span:nth-of-type(1) {
+  -webkit-animation: 1s blink infinite 0.3333s;
+          animation: 1s blink infinite 0.3333s;
+}
+.typing-indicator span:nth-of-type(2) {
+  -webkit-animation: 1s blink infinite 0.6666s;
+          animation: 1s blink infinite 0.6666s;
+}
+.typing-indicator span:nth-of-type(3) {
+  -webkit-animation: 1s blink infinite 0.9999s;
+          animation: 1s blink infinite 0.9999s;
+}
+
+@-webkit-keyframes blink {
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 1;
+  }
+}
+@-webkit-keyframes bulge {
+  50% {
+    -webkit-transform: scale(1.05);
+            transform: scale(1.05);
+  }
+}
+@keyframes bulge {
+  50% {
+    -webkit-transform: scale(1.05);
+            transform: scale(1.05);
+  }
+}
+
+/* Dropdown with arrow adapted from https://bootsnipp.com/snippets/featured/dropdown-menu-ui */
+.dropdown {
+}
+.dropdown-menu>li.item {
+  line-height: 22px;
+  margin-left: 1em;
+  margin-right: 1em;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.dropdown-menu>li.divider {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.dropdown-menu>li.item img {
+  width: 22px;
+  border-radius: 50%;
+  margin: 0 5px 0 0;
+  vertical-align: middle
+}
+
+.dropdown ul.dropdown-menu {
+  position: absolute;
+  top: calc(100% - 15px);
+  left: unset;
+  right: 0px;
+  border-radius:4px;
+  box-shadow:none;
+  margin-top:20px;
+}
+.dropdown ul.dropdown-menu:before {
+  content: "";
+  border-bottom: 10px solid #fff;
+  border-right: 10px solid transparent;
+  border-left: 10px solid transparent;
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  z-index: 10;
+}
+.dropdown ul.dropdown-menu:after {
+  content: "";
+  border-bottom: 12px solid #ccc;
+  border-right: 12px solid transparent;
+  border-left: 12px solid transparent;
+  position: absolute;
+  top: -12px;
+  right: 14px;
+  z-index: 9;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
