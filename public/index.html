@@ -1,5 +1,7 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<script src="/vue.js"></script>
+<script src="/vue.min.js"></script>
+<script src="/vue-virtual-scroll.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.slim.js"></script>
 <!------ Include the above in your HEAD tag ---------->
 
 <!DOCTYPE html>
@@ -7,8 +9,6 @@
 <head>
 <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
 
-<script src="https://use.typekit.net/hoy3lrg.js"></script>
-<script>try{Typekit.load({ async: true });}catch(e){}</script>
 <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'><link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
 <link rel='stylesheet prefetch' href='/style.css'>
 </head><body>
@@ -23,9 +23,5 @@
     <component :is="state.belowMessagesView"></component>
   </div>
 </div>
-
-<script src="https://unpkg.com/vue@2.3.0/dist/vue.js"></script>
-<script src="https://tangbc.github.io/vue-virtual-scroll-list/index.js"></script>
-<script src="/socket.io/socket.io.js"></script>
 <script src="/main.js"></script>
 </body></html>

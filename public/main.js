@@ -85,7 +85,6 @@ var store = {
     // Fallthrough for insert in the middle of the set.
     console.log('middle insert?');
     for (var i = 0; i < this.data.messages[message.room].length - 1; i++) {
-      console.log(this.data.messages[message.room][i].time, message.time, this.data.messages[message.room][i + 1].time);
       if (this.data.messages[message.room][i].time >= message.time &&
           this.data.messages[message.room][i + 1].time <= message.time) {
         this.data.messages[message.room].splice(i, 0, message);
@@ -212,8 +211,6 @@ Vue.component('rooms', {
   }
 });
 
-// <li class="divider" v-if="index != events.length - 1"></li>
-
 Vue.component('room-details', {
   template: `<div class="room-details">
     <img :src="activeRoom.image" alt="" class='description' />
@@ -323,25 +320,17 @@ Vue.component('messages', {
     },
 
     scroll: function() {
-      if (this.timeout) {
-        clearTimeout(this.timeout);
+      var messageList = this.$el.querySelector('.list');
+
+      if (messageList.scrollTop + messageList.clientHeight === messageList.scrollHeight) {
+        this.scrolled = false;
+      } else {
+        this.scrolled = true;
       }
-
-      this.timeout = setTimeout(function() {
-        var messageList = this.$el.querySelector('.list');
-
-        if (messageList.scrollTop + messageList.clientHeight == messageList.scrollHeight) {
-          this.scrolled = false;
-        } else {
-          this.scrolled = true;
-        }
-      }.bind(this), 200);
     }
   },
 
   updated: function() {
-    console.log('message list updated: ' + this.scrolled);
-
     var messageList = this.$el.querySelector('.list');
 
     if (!this.scrolled) {
@@ -351,8 +340,6 @@ Vue.component('messages', {
       // When we load more content in while scrolled up leave the scroll position in the same
       // place so that the content doesn't move.
       messageList.scrollTop = messageList.scrollHeight - this.oldHeight;
-      this.oldHeight = this.$el.scrollHeight;/*
-      console.log('New height: ' + this.oldHeight);*/
     }
   },
 

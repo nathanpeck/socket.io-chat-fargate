@@ -2,8 +2,20 @@
 var _ = require('lodash');
 var crypto = require('crypto');
 var express = require('express');
-var app = express();
+var compression = require('compression');
 var path = require('path');
+var enforce = require('express-sslify');
+
+var app = express();
+
+// GZIP compress resources served
+app.use(compression());
+
+// Force redirect to HTTPS if the protocol was HTTP
+if (!process.env.LOCAL) {
+  app.use(enforce.HTTPS({ trustProtoHeader: true }));
+}
+
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var redis = require('socket.io-redis');

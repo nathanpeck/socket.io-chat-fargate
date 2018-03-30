@@ -84,10 +84,16 @@ Resources:
           Memory: !Ref 'ContainerMemory'
           Image: !Ref 'ImageUrl'
           Environment:
+            - Name: REGION
+              Value: !Ref 'AWS::Region'
+            - Name: NODE_ENV
+              Value: production
             - Name: REDIS_ENDPOINT
               Value:
                 Fn::ImportValue:
                   !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+            - Name: ENV_NAME
+              Value: !Ref 'EnvironmentName'
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
           LogConfiguration:
@@ -144,7 +150,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       TargetType: ip
-      Name: !Ref 'ServiceName'
+      Name: !Join ['-', [!Ref 'EnvironmentName', !Ref 'ServiceName']]
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2

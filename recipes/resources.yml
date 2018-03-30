@@ -108,8 +108,8 @@ Resources:
               - "dynamodb:UpdateItem"
               - "dynamodb:DeleteItem"
             Resource:
-              - !Join ['', ['arn:aws:dynamodb:::table/', !Ref 'UsersTable']]
-              - !Join ['', ['arn:aws:dynamodb:::table/', !Ref 'MessagesTable']]
+              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
+              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
 
 Outputs:
   RedisEndpoint:
