@@ -15,6 +15,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a {
+  color: #FF9900;
+}
+
+a:hover {
+  color: #FF8800;
+}
+
+.btn {
+  border: 1px solid #FF9900;
+  background: #FF8800;
+}
+
+.btn:hover {
+  border: 1px solid #FF9900;
+  background: #FF9900;
+}
+
 #frame {
   width: 95%;
   min-width: 360px;
@@ -86,7 +104,7 @@ body {
 }
 #frame #sidepanel .rooms ul li.room.active {
   background: #32465a;
-  border-right: 5px solid #435f7a;
+  border-right: 5px solid #FF9900;
 }
 #frame #sidepanel .rooms ul li.room.active span.room-status {
   border: 2px solid #32465a !important;
@@ -118,7 +136,7 @@ body {
   background: #f1c40f;
 }
 #frame #sidepanel .rooms ul li.room .wrap span.unread {
-  background: #e74c3c;
+  background: #FF9900;
 }
 #frame #sidepanel .rooms ul li.room .wrap span.none {
   background: transparent;
@@ -209,7 +227,8 @@ body {
   margin-right: 20px;
 }
 
-#frame .content .messages {
+/* NEW STYES */
+#frame .content .messages-wrapper .list {
   height: auto;
   min-height: calc(100% - 93px);
   max-height: calc(100% - 93px);
@@ -217,48 +236,39 @@ body {
   overflow-y: scroll;
 }
 @media screen and (max-width: 735px) {
-  #frame .content .messages {
+  #frame .content .messages-wrapper .list {
     max-height: calc(100% - 105px);
   }
 }
-#frame .content .messages::-webkit-scrollbar {
+
+#frame .content .messages-wrapper .list::-webkit-scrollbar {
   width: 8px;
   background: transparent;
 }
-#frame .content .messages::-webkit-scrollbar-thumb {
+#frame .content .messages-wrapper .list::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.3);
 }
-#frame .content .messages ul li {
+
+#frame .content .messages-wrapper .list .message:nth-last-child(1) {
+  margin-bottom: 20px;
+}
+
+#frame .content .messages-wrapper .list .message {
   display: inline-block;
-  clear: both;
-  float: left;
-  margin: 15px 15px 5px 15px;
+  margin: 5px 15px 5px 15px;
   width: calc(100% - 25px);
   font-size: 0.9em;
 }
-#frame .content .messages ul li:nth-last-child(1) {
-  margin-bottom: 20px;
-}
-#frame .content .messages ul li.sent img {
+
+#frame .content .messages-wrapper .list .message img {
   margin: 6px 8px 0 0;
-}
-#frame .content .messages ul li.sent p {
-  background: #435f7a;
-  color: #f5f5f5;
-}
-#frame .content .messages ul li.replies img {
-  margin: 6px 8px 0 0;
-}
-#frame .content .messages ul li.replies p {
-  background: #f5f5f5;
-  float: left;
-}
-#frame .content .messages ul li img {
   width: 22px;
   border-radius: 50%;
   float: left;
 }
-#frame .content .messages ul li p {
+
+#frame .content .messages-wrapper .list .message p {
+  float: left;
   display: inline-block;
   padding: 10px 15px;
   border-radius: 20px;
@@ -266,6 +276,24 @@ body {
   line-height: 130%;
   word-wrap:break-word;
 }
+
+#frame .content .messages-wrapper .list .message .sender {
+  display: block;
+  clear: right;
+  padding: 2px 40px;
+  font-size: 0.8em;
+  font-color: #888888;
+}
+
+#frame .content .messages-wrapper .list .message.sent p {
+  background: #FF8800;
+  color: #f5f5f5;
+}
+#frame .content .messages-wrapper .list .message.replies p {
+  background: #f5f5f5;
+}
+
+
 #frame .content .message-input {
   position: absolute;
   bottom: 0;
@@ -298,7 +326,7 @@ body {
   width: 50px;
   padding: 12px 0;
   cursor: pointer;
-  background: #32465a;
+  background: #FF9900;
   color: #f5f5f5;
 }
 @media screen and (max-width: 735px) {
@@ -307,7 +335,7 @@ body {
   }
 }
 #frame .content .message-input .wrap button:hover {
-  background: #435f7a;
+  background: #FF8800;
 }
 #frame .content .message-input .wrap button:focus {
   outline: none;

@@ -1,5 +1,7 @@
 var socket = io();
 
+Vue.component('virtual-list', VirtualScrollList)
+
 var store = {
   data: {
     state: {
@@ -184,28 +186,12 @@ var store = {
   }
 };
 
-/*
- Cleaned version of code from https://www.npmjs.com/package/vue-chat-scroll-top-scroll
-*/
-const scrollToBottom = el => {
-  el.scrollTop = el.scrollHeight;
-};
-
-const emit = (vnode, name, data) => {
-  var handlers = (vnode.data && vnode.data.on) ||
-    (vnode.componentOptions && vnode.componentOptions.listeners);
-
-  if (handlers && handlers[name]) {
-    handlers[name].fns(data);
-  }
-};
-
 Vue.component('rooms', {
   template: `<div class='rooms'><ul>
-    <li class="room" v-on:click="switchRoom(room.id)" v-bind:class="{ active: room.id==state.activeRoom }" v-for='room in rooms'>
+    <li class="room" v-on:click="switchRoom(room.id)" :class="{ active: room.id==state.activeRoom }" v-for='room in rooms'>
       <div class="wrap">
-        <span class="room-status" v-if="room.status!='none'" v-bind:class="room.status"></span>
-        <img v-bind:src="room.image" alt="" />
+        <span class="room-status" v-if="room.status!='none'" :class="room.status"></span>
+        <img :src="room.image" alt="" />
         <div class="meta">
           <p class="name">{{ room.name }}</p>
           <p class="preview">{{ room.preview }}</p>
@@ -226,16 +212,18 @@ Vue.component('rooms', {
   }
 });
 
+// <li class="divider" v-if="index != events.length - 1"></li>
+
 Vue.component('room-details', {
   template: `<div class="room-details">
-    <img v-bind:src="activeRoom.image" alt="" class='description' />
+    <img :src="activeRoom.image" alt="" class='description' />
     <p>{{ activeRoom.name }}</p>
     <div class='online-count dropdown'>
       {{ state.presentCount }} online
       <transition name='fade' appear>
         <ul class="dropdown-menu" v-if="events.length > 0" style='display: block;'>
           <template v-for='(event, index) in events'>
-            <li class="item" v-bind:key="event.until + event.username + event.type"><img :src='event.avatar'>{{ event.username }} {{ event.type}}</li>
+            <li class="item" :key="event.until + event.username + event.type"><img :src='event.avatar'>{{ event.username }} {{ event.type}}</li>
           </template>
         </ul>
       </transition>
@@ -250,25 +238,28 @@ Vue.component('room-details', {
 });
 
 Vue.component('messages', {
-  template: `<div class="messages">
-    <ul>
-      <li v-bind:class="{ replies: message.username!=state.username, sent: message.username==state.username}" v-for='message in activeMessages'>
-        <img :src="message.avatar" />
-        <p>{{ message.content.text }}</p>
-      </li>
-      <li v-if="currentRoomTypers.length > 0" class='typing replies'>
-        <img v-for='typer in currentRoomTypers' :src="typer.avatar" />
-        <div class="typing-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
+  template: `
+    <div class='messages-wrapper'>
+      <virtual-list :size="50" :remain="8" :bench="44" class="list" :start="0" :totop='loadMore' :onscroll='scroll'>
+        <div :class="{ message: true, replies: message.username!=state.username, sent: message.username==state.username}" v-for="(message, index) of activeMessages" :index="message.message" :key="message.message">
+          <span class='sender'>{{ message.username }}</span>
+          <img :src="message.avatar" />
+          <p>{{ message.content.text }}</p>
         </div>
-      </li>
-    </ul>
-  </div>`,
+        <div v-if="currentRoomTypers.length > 0" class='message replies'>
+          <img v-for='typer in currentRoomTypers' :src="typer.avatar" />
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </virtual-list>
+    </div>
+  `,
   data: function() {
     return {
-      oldHeight: 0,
+      scrolled: false,
       loading: false,
       state: store.data.state,
       messages: store.data.messages,
@@ -315,7 +306,8 @@ Vue.component('messages', {
         from.message = this.messages[this.state.activeRoom][0].message;
       }
 
-      this.oldHeight = this.$el.scrollHeight;
+      var messageList = this.$el.querySelector('.list');
+      this.oldHeight = messageList.scrollHeight;
 
       socket.emit(
         'message list',
@@ -330,52 +322,43 @@ Vue.component('messages', {
       );
     },
 
-    handleScroll: function() {
-      if (this.loading) {
-        // Don't load more ever if it is alreading loading.
-        return;
-      }
-
+    scroll: function() {
       if (this.timeout) {
         clearTimeout(this.timeout);
       }
+
       this.timeout = setTimeout(function() {
-        // Remember the current scroll position.
-        this.scrolled = this.$el.scrollTop + this.$el.clientHeight + 1 < this.$el.scrollHeight;
+        var messageList = this.$el.querySelector('.list');
 
-        if (this.$el.scrollTop < 10) {
-          // The user scrolled to the top
-          this.loadMore();
-        }
-
-        if (this.$el.scrollTop === this.$el.scrollHeight) {
-          // The user scroll to the bottom.
+        if (messageList.scrollTop + messageList.clientHeight == messageList.scrollHeight) {
           this.scrolled = false;
+        } else {
+          this.scrolled = true;
         }
       }.bind(this), 200);
     }
   },
 
   updated: function() {
+    console.log('message list updated: ' + this.scrolled);
+
+    var messageList = this.$el.querySelector('.list');
+
     if (!this.scrolled) {
       // If the user hasn't manually scrolled up then automatically scroll to bottom
-      this.$el.scrollTop = this.$el.scrollHeight;
+      messageList.scrollTop = messageList.scrollHeight;
     } else {
       // When we load more content in while scrolled up leave the scroll position in the same
       // place so that the content doesn't move.
-      this.$el.scrollTop = this.$el.scrollHeight - this.oldHeight;
-      /*this.oldHeight = this.$el.scrollHeight;
+      messageList.scrollTop = messageList.scrollHeight - this.oldHeight;
+      this.oldHeight = this.$el.scrollHeight;/*
       console.log('New height: ' + this.oldHeight);*/
     }
   },
 
-  mounted() {
-    this.$el.addEventListener('scroll', this.handleScroll);
+  mounted: function() {
     this.loadMore();
-  },
-
-  destroyed() {
-    this.$el.removeEventListener('scroll', this.handleScroll);
+    this.scrolled = false;
   }
 });
 
@@ -536,7 +519,7 @@ Vue.component('create-account', {
         <br />
         <br />
         <p v-if="error=='username'" class="text-danger">Username is already taken</p> <br />
-        <div class="form-group" v-bind:class="{'has-error': error=='username'}">
+        <div class="form-group" :class="{'has-error': error=='username'}">
           <div class="input-group">
             <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
             <input id="username" type="text" class="username form-control" name="username" value="" placeholder="Username" required>
