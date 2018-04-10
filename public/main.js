@@ -618,6 +618,8 @@ socket.emit('room list', function(err, rooms) {
 });
 
 socket.on('user joined', function(joined) {
+  console.log(joined);
+
   store.data.state.presentCount = joined.numUsers;
 
   store.addEvent({
@@ -628,6 +630,8 @@ socket.on('user joined', function(joined) {
 });
 
 socket.on('user left', function(left) {
+  console.log(left);
+
   store.data.state.presentCount = left.numUsers;
 
   store.addEvent({
