@@ -1,0 +1,11 @@
+environments:
+- name: acceptance
+- name: production
+service:
+  port: 3000
+  pathPatterns:
+  - /*
+  pipeline:
+    source:
+      provider: GitHub
+      repo: nathanpeck/socket.io-chat-fargate
