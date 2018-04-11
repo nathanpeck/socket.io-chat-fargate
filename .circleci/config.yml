@@ -6,9 +6,14 @@ jobs:
         aws_auth:
           aws_access_key_id: $AWS_ACCESS_KEY_ID
           aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
+    steps:
+      - run: echo "Built!"
   deploy:
     docker:
       - image: 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
         aws_auth:
           aws_access_key_id: $AWS_ACCESS_KEY_ID
           aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
+    steps:
+      steps:
+      - run: echo "Pushed!"
