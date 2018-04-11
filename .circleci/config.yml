@@ -29,12 +29,12 @@ jobs:
             python get-pip.py --user
             export PATH=~/.local/bin:$PATH
             pip install awscli --upgrade --user
+            aws ecr get-login
 
       # Build and push
       - run:
           name: Authenticate, Build, and Push
           command: |
-            $(aws ecr get-login)
             docker build -t 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1 .
             docker push 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
   deploy:
