@@ -4,8 +4,15 @@ jobs:
     docker:
       - image: busybox
     steps:
-      - run: setup_remote_docker
+      # Fetch code from the repo
       - run: checkout
+
+      # Setup for a docker buid.
+      - run:
+          setup_remote_docker:
+            docker_layer_caching: true
+
+      # Build and push
       - run: docker build -t 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1 .
       - run: docker push 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
   deploy:
