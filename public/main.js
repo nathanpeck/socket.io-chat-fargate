@@ -393,6 +393,7 @@ Vue.component('message-input', {
     submit: function() {
       var textbox = this.$el.querySelector('#textbox');
       var text = textbox.value.trim();
+      var self = this;
 
       if (text === '') {
         return;
@@ -410,14 +411,15 @@ Vue.component('message-input', {
           }
 
           store.insertMessage(message);
+          store.removeTyper({
+            room: self.state.activeRoom,
+            username: self.state.username
+          });
+          store.data.state.lastTyping = 0;
         }
       );
 
       socket.emit('stop typing', this.state.activeRoom);
-      store.removeTyper({
-        room: this.state.activeRoom,
-        username: this.state.username
-      });
 
       textbox.value = '';
     }
@@ -618,8 +620,6 @@ socket.emit('room list', function(err, rooms) {
 });
 
 socket.on('user joined', function(joined) {
-  console.log(joined);
-
   store.data.state.presentCount = joined.numUsers;
 
   store.addEvent({
@@ -630,8 +630,6 @@ socket.on('user joined', function(joined) {
 });
 
 socket.on('user left', function(left) {
-  console.log(left);
-
   store.data.state.presentCount = left.numUsers;
 
   store.addEvent({
