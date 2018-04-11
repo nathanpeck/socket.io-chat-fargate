@@ -5,11 +5,10 @@ jobs:
       - image: busybox
     steps:
       # Fetch code from the repo
-      - run: checkout
+      - checkout
 
       # Setup for a docker buid.
-      - run:
-          setup_remote_docker:
+      - setup_remote_docker:
             docker_layer_caching: true
 
       # Build and push
