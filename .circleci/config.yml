@@ -12,7 +12,7 @@ jobs:
             docker_layer_caching: true
 
       # Add docker client
-      run:
+      - run:
           name: Install Docker client
           command: |
             set -x
