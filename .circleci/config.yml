@@ -22,15 +22,20 @@ jobs:
             tar -xz -C /tmp -f /tmp/docker-$VER.tgz
             mv /tmp/docker/* /usr/bin
 
-      # Add the aws CLI
-      - run: curl -O https://bootstrap.pypa.io/get-pip.py \
-          python get-pip.py --user \
-          pip install awscli --upgrade --user
+      - run:
+          name: Install the AWS CLI
+          command: |
+            curl -O https://bootstrap.pypa.io/get-pip.py
+            python get-pip.py --user
+            pip install awscli --upgrade --user
 
       # Build and push
-      - run: $(aws ecr get-login)
-      - run: docker build -t 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1 .
-      - run: docker push 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
+      - run:
+          name: Authenticate, Build, and Push
+          command: |
+            $(aws ecr get-login)
+            docker build -t 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1 .
+            docker push 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
   deploy:
     docker:
       - image: busybox
