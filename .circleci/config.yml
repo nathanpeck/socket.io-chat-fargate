@@ -15,7 +15,7 @@ jobs:
       - run: pip install awscli --upgrade --user
 
       # Build and push
-      - run: `aws ecr get-login`
+      - run: $(aws ecr get-login)
       - run: docker build -t 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1 .
       - run: docker push 209640446841.dkr.ecr.us-east-1.amazonaws.com/chat:$CIRCLE_SHA1
   deploy:
