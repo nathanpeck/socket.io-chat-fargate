@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: busybox
+      - image: docker
     steps:
       # Fetch code from the repo
       - checkout
