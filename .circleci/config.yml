@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker
+      - image: ubuntu
     steps:
       # Fetch code from the repo
       - checkout
@@ -10,6 +10,16 @@ jobs:
       # Setup for a docker buid.
       - setup_remote_docker:
             docker_layer_caching: true
+
+      # Add docker client
+      run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://get.docker.com/builds/Linux/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
 
       # Add the aws CLI
       - run: curl -O https://bootstrap.pypa.io/get-pip.py \
