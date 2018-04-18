@@ -1,6 +1,6 @@
 var socket = io();
 
-Vue.component('virtual-list', VirtualScrollList)
+Vue.component('virtual-list', VirtualScrollList);
 
 var store = {
   data: {
