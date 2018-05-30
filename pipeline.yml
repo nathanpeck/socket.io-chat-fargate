@@ -133,6 +133,9 @@ Resources:
                   - "autoscaling:*"
                   - "dynamodb:*"
                   - "elasticache:*"
+                  - "logs:*"
+                  - "application-autoscaling:*"
+                  - "cloudwatch:*"
                 Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
@@ -162,9 +165,9 @@ Resources:
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
-                - printf '[{"name":"chat","imageUri":"%s"}]' "$IMAGE_URI" > images.json
+                - printf '{"ImageUri":"%s"}' "$IMAGE_URI" > build.json
           artifacts:
-            files: images.json
+            files: build.json
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:17.09.0
@@ -269,7 +272,6 @@ Resources:
                 - Name: BuildOutput
               RunOrder: 1
 
-
         # Finally we deploy the Fargate service to the cluster
         - Name: Deploy
           Actions:
@@ -282,18 +284,19 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
-                StackName: !Sub ${EnvironmentName}-ChatResources
+                StackName: !Sub ${EnvironmentName}-ChatService
                 TemplatePath: Source::chat-service.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
-                    "EnvironmentName": "${EnvironmentName}"
+                    "EnvironmentName": "${EnvironmentName}",
                     "ImageUrl": {
-                      "Fn::GetParam" : ["BuildOutput", "images.json", "chat"]
+                      "Fn::GetParam" : ["BuildOutput", "build.json", "ImageUri"]
                     }
                   }
               InputArtifacts:
                 - Name: Source
+                - Name: BuildOutput
 
 Outputs:
   PipelineUrl:
