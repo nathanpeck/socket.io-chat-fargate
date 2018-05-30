@@ -76,6 +76,8 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
+              # Allow codepipeline to put artifacts in the S3 bucket
+              # as well as get artifacts back out of it.
               - Resource:
                   - !Sub arn:aws:s3:::${ArtifactBucket}/*
                 Effect: Allow
@@ -84,18 +86,52 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectVersion
                   - s3:GetBucketVersioning
+              # Allow codepipeline to build code builds
               - Resource: "*"
                 Effect: Allow
                 Action:
-                  - ecs:DescribeServices
-                  - ecs:DescribeTaskDefinition
-                  - ecs:DescribeTasks
-                  - ecs:ListTasks
-                  - ecs:RegisterTaskDefinition
-                  - ecs:UpdateService
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
                   - iam:PassRole
+              # Allow codepipeline to deploy cloudformation stacks
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:CreateStack
+                  - cloudformation:CreateUploadBucket
+                  - cloudformation:DeleteStack
+                  - cloudformation:Describe*
+                  - cloudformation:List*
+                  - cloudformation:UpdateStack
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:ExecuteChangeSet
+                Resource: "*"
+
+  # CloudFormation deployment role. This role is passed by CodeBuild to
+  # CloudFormation to use when setting up the application resources
+  CloudFormationDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: deploy-stack
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "iam:*"
+                  - "ec2:*"
+                  - "ecs:*"
+                  - "elasticloadbalancing:*"
+                  - "autoscaling:*"
+                Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
   ArtifactBucket:
@@ -120,7 +156,7 @@ Resources:
                 - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
             build:
               commands:
-                - docker build --tag "$IMAGE_URI" .
+                - docker build --tag "${IMAGE_URI}" ./src
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
@@ -168,7 +204,7 @@ Resources:
               RunOrder: 1
 
         # Now we deploy the base resources: the cluster and VPC itself.
-        - Name: Base Resources
+        - Name: BaseResources
           Actions:
             - Name: Deploy
               ActionTypeId:
@@ -178,11 +214,13 @@ Resources:
                 Provider: CloudFormation
               Configuration:
                 ActionMode: CREATE_UPDATE
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-BaseResources
                 TemplatePath: Source::cluster.yml
-                ParameterOverrides: |
+                Capabilities: CAPABILITY_IAM
+                ParameterOverrides: !Sub |
                   {
-                    "EnvironmentName": { "Fn::Ref": "EnvironmentName" }
+                    "EnvironmentName": "${EnvironmentName}"
                   }
               InputArtifacts:
                 - Name: Source
