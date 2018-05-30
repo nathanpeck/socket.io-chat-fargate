@@ -117,4 +117,9 @@ Outputs:
     Value: !GetAtt 'Redis.RedisEndpoint.Address'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'RedisEndpoint' ] ]
+  ChatServiceRole:
+    Description: The role of the chat service
+    Value: !GetAtt 'ChatServiceRole.Arn'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatServiceRole' ] ]
 

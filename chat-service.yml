@@ -43,14 +43,6 @@ Parameters:
     Type: Number
     Default: 2
     Description: How many copies of the service task to run
-  Role:
-    Type: String
-    Default: ""
-    Description: (Optional) An IAM role to give the service's containers if the code within needs to
-                 access other AWS resources like S3 buckets, DynamoDB tables, etc
-
-Conditions:
-  HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
 
 Resources:
   # A log group for storing the container logs for this service
@@ -74,10 +66,8 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'ECSTaskExecutionRole']]
       TaskRoleArn:
-        Fn::If:
-          - 'HasCustomRole'
-          - !Ref 'Role'
-          - !Ref "AWS::NoValue"
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'ChatServiceRole']]
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'

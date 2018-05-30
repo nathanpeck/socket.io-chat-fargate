@@ -131,6 +131,8 @@ Resources:
                   - "ecs:*"
                   - "elasticloadbalancing:*"
                   - "autoscaling:*"
+                  - "dynamodb:*"
+                  - "elasticache:*"
                 Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
@@ -227,9 +229,32 @@ Resources:
               OutputArtifacts:
                 - Name: BaseResources
 
-        # And we add the resources that the application depends on like DynamoDB
-        - Name: Build
+        # And we deploy the application resources (Elasticache, DynamoDB, etc)
+        - Name: ChatResources
           Actions:
+            # Deploy the chat resources
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
+                StackName: !Sub ${EnvironmentName}-ChatResources
+                TemplatePath: Source::resources.yml
+                Capabilities: CAPABILITY_IAM
+                ParameterOverrides: !Sub |
+                  {
+                    "EnvironmentName": "${EnvironmentName}"
+                  }
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: ChatResources
+
+            # And build the chat docker image
             - Name: Build
               ActionTypeId:
                 Category: Build
@@ -244,22 +269,31 @@ Resources:
                 - Name: BuildOutput
               RunOrder: 1
 
+
         # Finally we deploy the Fargate service to the cluster
-        #- Name: Deploy
-        #  Actions:
-        #    - Name: Deploy
-        #      ActionTypeId:
-        #        Category: Deploy
-        #        Owner: AWS
-        #        Version: 1
-        #        Provider: ECS
-        #      Configuration:
-        #        ClusterName: !Ref Cluster
-        #        ServiceName: !Ref Service
-        #        FileName: images.json
-        #      InputArtifacts:
-        #        - Name: BuildOutput
-        #      RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
+                StackName: !Sub ${EnvironmentName}-ChatResources
+                TemplatePath: Source::chat-service.yml
+                Capabilities: CAPABILITY_IAM
+                ParameterOverrides: !Sub |
+                  {
+                    "EnvironmentName": "${EnvironmentName}"
+                    "ImageUrl": {
+                      "Fn::GetParam" : ["BuildOutput", "images.json", "chat"]
+                    }
+                  }
+              InputArtifacts:
+                - Name: Source
 
 Outputs:
   PipelineUrl:
