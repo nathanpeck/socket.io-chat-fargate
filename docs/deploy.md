@@ -10,7 +10,7 @@ The guide walks you through the process of deploying a production grade copy of 
 
 Go to [Route 53](https://console.aws.amazon.com/route53/home) and you'll see a box to "Register a domain". Go ahead and purchase a domain name of your choice.
 
-![buy domain](./images/buy-domain.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/buy-domain.png' width='50%' />
 
 Once your domain is purchased and processed you'll see it show up on [your list of domains](https://console.aws.amazon.com/route53/home?#DomainListing:):
 
