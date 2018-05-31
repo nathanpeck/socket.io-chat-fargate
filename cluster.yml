@@ -203,14 +203,14 @@ Resources:
   DNS:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      HostedZoneName: !Ref 'DomainZone',
-      Comment: "Zone apex alias targeted to load balancer.",
+      HostedZoneName: !Ref 'DomainZone'
+      Comment: "Zone apex alias targeted to load balancer."
       RecordSets:
-        - Name: !Ref 'DomainName',
+        - Name: !Ref 'DomainName'
           Type: A
           AliasTarget:
-            HostedZoneId: !GetAtt "PublicLoadBalancer.CanonicalHostedZoneNameID"
-            DNSName: !GetAtt "PublicLoadBalancer.DNSName"
+            HostedZoneId: !GetAtt 'PublicLoadBalancer.CanonicalHostedZoneNameID'
+            DNSName: !GetAtt 'PublicLoadBalancer.DNSName'
 
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the
