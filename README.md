@@ -2,17 +2,20 @@
 
 A simple chat demo for socket.io
 
-## How to use
+## How to run locally
 
 ```
-$ npm install
-$ npm start
+docker build -t chat .
+docker network create chatapp
+docker run -d --net=chatapp --name redis redis
+docker run -d --net=chatapp --name chat1 -p 3000:3000 -e "REDIS_ENDPOINT=redis" chat
 ```
 
-And point your browser to `http://localhost:3000`. Optionally, specify
-a port by supplying the `PORT` env variable.
+And point your browser to `http://localhost:3000`.
 
-## Deploy on AWS
+## Live Demo
+
+You can view a running copy of this app, deployed on AWS at: [fargate.chat](https://fargate.chat)
 
 - Must have a domain name hosted in Route53 and create an Amazon Certificate Manager SSL cert for the domain name.
 - Fork the repo and create a Github token.
