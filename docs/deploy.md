@@ -14,27 +14,27 @@ Go to [Route 53](https://console.aws.amazon.com/route53/home) and you'll see a b
 
 Once your domain is purchased and processed you'll see it show up on [your list of domains](https://console.aws.amazon.com/route53/home?#DomainListing:):
 
-![domain list](./images/domain-list.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/domain-list.png' width='50%' />
 
 ## 2. Register an SSL certificate for the domain
 
 Now go to [Amazon Certificate Manager](https://console.aws.amazon.com/acm/home) to get a free SSL certificate for the domain. Click the "Request a certificate" button.
 
-![certificate list](./images/certificate-list.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/certificate-list.png' width='50%' />
 
 Then we need to select that we want a "public certificate" because this is a certificate public web browsers will use for communicating securely with the chat app.
 
-![public certificate](./images/public-certificate.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/public-certificate.png' width='50%' />
 
 Then add the list of domains that should be covered by the SSL certificate. For maximum flexibility I prefer to have both the bare domain and a wildcard domain in the same certificate:
 
-![certificate domain list](./images/cert-domain-list.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/cert-domain-list.png' width='50%' />
 
 This allows me to serve HTTPS traffic on https://fargate.chat as well as on any subdomains if for example I want to have https://beta.fargate.chat
 
 ACM can take care of automatically validating the certificate for you if you are also hosting the domain on Route 53. After a few mins I am able to view the details of the created certificate and get the certificate ARN (Amazon Resource Name):
 
-![certificate details](./images/cert-details.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/cert-details.png' width='50%' />
 
 Copy that ARN value for usage later.
 
@@ -42,12 +42,12 @@ Copy that ARN value for usage later.
 
 First clone this repo onto your Github account by clicking the "Fork" button in the upper right:
 
-![github-fork](./images/github-fork.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/github-fork.png' width='25%' />
 
 Then go to your [Github settings to generate a new token](https://github.com/settings/tokens). Click on "Generate new token" and create a token which has the following access:
 
-- admin:repo_hook
-- repo
+- `admin:repo_hook`
+- `repo`
 
 These two permissions will allow AWS CodePipeline to monitor the Github repo for changes, and react to updates by redeploying the application.
 
@@ -57,21 +57,21 @@ Download the repository using `git clone` and once the source is on your machine
 
 Go to [AWS CloudFormation](https://console.aws.amazon.com/cloudformation/home) and click the "Create Stack" button. In the following dialog click "Choose File" and select the `pipeline.yml` file you located, then click "Next". You will see a list of input parameters. Fill them in with the appropriate values:
 
-![cloudformation template parameters](./images/cloudformation-template-parameters.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/cloudformation-template-parameters.png' width='50%' />
 
 Click Next twice, select the checkbox next to "I acknowledge that AWS CloudFormation might create IAM resources." and then click "Create". You will see a CloudFormation template in the `CREATE_IN_PROGRESS` state.
 
-![pipeline create](./images/pipeline-create.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/pipeline-create.png' width='50%' />
 
 This template is creating an AWS CodePipeline for you. You can view the [source of the template](../pipeline.yml) in the meantime to understand what is being setup.
 
 After about a minute you will see another CloudFormation template appear:
 
-![pipeline done](./images/pipeline-done.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/pipeline-done.png' width='50%' />
 
 This template was automatically deployed by the pipeline itself. To understand how this happened visit [AWS CodePipeline](https://console.aws.amazon.com/codepipeline/home) in your AWS console and click to view the details of the pipeline:
 
-![pipeline view](./images/pipeline-view.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/pipeline-view.png' width='50%' />
 
 As you can see there are a few stages to the build:
 
@@ -83,19 +83,19 @@ As you can see there are a few stages to the build:
 
 Once the stages are all done you will see a list of CloudFormation templates that have been deployed:
 
-![cloudformation template list](./images/cloudformation-template-list.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/cloudformation-template-list.png' width='50%' />
 
 ## 5. Create a Route 53 alias for the load balancer.
 
 View the details of the `BaseResources` template. Click the "Outputs" tab and find the output `ExternalUrl`. This is the public facing URL of the load balancer that is in front of the application. However if you just try to access this URL directly you will get an ugly SSL error:
 
-![ssl error](./images/ssl-error.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/ssl-error.png' width='50%' />
 
 The reason for this is that the load balancer is configured to use an SSL certificate for `*.fargate.chat`. So we need to create a Route 53 alias that points at the load balancer.
 
 Open up [Route 53](https://console.aws.amazon.com/route53/home) again click "Hosted Zones" on the left hand side. Locate the hosted zone for the domain name you created in step #1 and click into it. Then click "Create Record Set". We need to create an A record which points at the load balancer:
 
-![create dns record](./images/create-dns-record.png)
+<img src='https://github.com/nathanpeck/socket.io-chat-fargate/raw/master/docs/images/create-dns-record.png' width='50%' />
 
 Here I am creating an alias `beta.fargate.chat` of the Alias type and I am configuring the Alias to point at the DNS name of the load balancer for my application stack. I click "Create" and now need to wait a few minutes for DNS to propagate. Route 53 propagates the new record to its DNS servers worldwide within 60 seconds, but sometimes it may take a little while longer for your ISP or other parties to pick up the changes.
 
