@@ -209,7 +209,7 @@ Resources:
         - Name: !Ref 'DomainName'
           Type: A
           AliasTarget:
-            HostedZoneId: !GetAtt 'PublicLoadBalancer.CanonicalHostedZoneNameID'
+            HostedZoneId: !GetAtt 'PublicLoadBalancer.CanonicalHostedZoneID'
             DNSName: !GetAtt 'PublicLoadBalancer.DNSName'
 
   # This is an IAM role which authorizes ECS to manage resources on your
