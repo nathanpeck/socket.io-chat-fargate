@@ -198,6 +198,20 @@ Resources:
       Certificates:
         - CertificateArn: !Ref 'CertificateArn'
 
+  # Create the Route53 DNS record that will serve as an alias for the
+  # load balancer
+  DNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Ref 'DomainZone',
+      Comment: "Zone apex alias targeted to load balancer.",
+      RecordSets:
+        - Name: !Ref 'DomainName',
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt "PublicLoadBalancer.CanonicalHostedZoneNameID"
+            DNSName: !GetAtt "PublicLoadBalancer.DNSName"
+
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the
   # details of where your containers are, so that traffic can reach your
@@ -320,12 +334,12 @@ Outputs:
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'AutoscalingRole' ] ]
   HTTPListener:
-    Description: The ARN of the public load balancer's Listener
+    Description: The ARN of the public load balancer's HTTP Listener
     Value: !Ref PublicLoadBalancerListenerHTTP
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicListenerHTTP' ] ]
   HTTPSListener:
-    Description: The ARN of the public load balancer's Listener
+    Description: The ARN of the public load balancer's HTTPS Listener
     Value: !Ref PublicLoadBalancerListenerHTTPS
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicListenerHTTPS' ] ]
