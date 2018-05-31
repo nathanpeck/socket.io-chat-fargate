@@ -13,14 +13,6 @@ Parameters:
   CertificateArn:
     Type: String
     Description: ARN of the Amazon Certificate Manager SSL certificate to use for this app
-  DomainZone:
-    Type: String
-    Default: fargate.chat.
-    Description: The name of the Route53 hosted zone for this app
-  DomainName:
-    Type: String
-    Default: fargate.chat.
-    Description: The specific alias name for the application
 
 Resources:
   # Create the ECR respository to hold built docker images
@@ -147,6 +139,7 @@ Resources:
                   - "logs:*"
                   - "application-autoscaling:*"
                   - "cloudwatch:*"
+                  - "route53:*"
                 Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
@@ -237,9 +230,7 @@ Resources:
                 ParameterOverrides: !Sub |
                   {
                     "EnvironmentName": "${EnvironmentName}",
-                    "CertificateArn": "${CertificateArn}",
-                    "DomainZone": "${DomainZone}",
-                    "DomainName": "${DomainName}"
+                    "CertificateArn": "${CertificateArn}"
                   }
               InputArtifacts:
                 - Name: Source

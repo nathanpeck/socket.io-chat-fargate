@@ -9,14 +9,6 @@ Parameters:
   CertificateArn:
     Type: String
     Description: ARN of the Amazon Certificate Manager SSL certificate to use for this app
-  DomainZone:
-    Type: String
-    Default: fargate.chat.
-    Description: The name of the Route53 hosted zone for this app
-  DomainName:
-    Type: String
-    Default: fargate.chat.
-    Description: The specific alias name for the application
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -205,20 +197,6 @@ Resources:
       Protocol: HTTPS
       Certificates:
         - CertificateArn: !Ref 'CertificateArn'
-
-  # Create the Route53 DNS record that will serve as an alias for the
-  # load balancer
-  DNS:
-    Type: AWS::Route53::RecordSetGroup
-    Properties:
-      HostedZoneName: !Ref 'DomainZone'
-      Comment: "Zone apex alias targeted to load balancer."
-      RecordSets:
-        - Name: !Ref 'DomainName'
-          Type: A
-          AliasTarget:
-            HostedZoneId: !GetAtt 'PublicLoadBalancer.CanonicalHostedZoneID'
-            DNSName: !GetAtt 'PublicLoadBalancer.DNSName'
 
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the
