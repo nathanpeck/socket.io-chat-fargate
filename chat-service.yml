@@ -155,8 +155,10 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
 
-  # Create a rule on the load balancer for routing traffic to the target group
-  LoadBalancerRule:
+  # Create rules to forward both HTTP and HTTPS traffic to the service's
+  # target group. The service itself will handle redirecting HTTP traffic
+  # to HTTPS
+  HTTPRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       Actions:
@@ -167,7 +169,20 @@ Resources:
           Values: [!Ref 'Path']
       ListenerArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListener']]
+          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTP']]
+      Priority: !Ref 'Priority'
+  HTTPSRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values: [!Ref 'Path']
+      ListenerArn:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
       Priority: !Ref 'Priority'
 
   # Enable autoscaling for this service
