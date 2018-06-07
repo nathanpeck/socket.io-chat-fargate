@@ -1,14 +1,15 @@
-# Socket.IO Chat
+# Fargate.chat
 
-![app](./docs/images/running-app.png)
+[![app](./docs/images/running-app.png)](https://fargate.chat)
 
-A simple Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed on Amazon Web Services, running in Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/).
+A simple Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services, running in Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/).
 
 Features:
 
-- Fully infrastructure as code, using [AWS CloudFormation](https://aws.amazon.com/cloudformation/) to create all the application resources
-- CI/CD Pipeline using [AWS CodePipeline](https://aws.amazon.com/codepipeline/)
-- Automated Docker builds using [AWS CodeBuild](https://aws.amazon.com/codebuild/)
+- No EC2 instances. One of the goals of this application architecture is that it is very hands off, nothing to manage or update.
+- Fully defined as infrastructure as code, using [AWS CloudFormation](https://aws.amazon.com/cloudformation/) to create all the application resources.
+- CI/CD Pipeline using [AWS CodePipeline](https://aws.amazon.com/codepipeline/), so that you can just push to the Github and it will automatically deploy.
+- Automated Docker container builds using [AWS CodeBuild](https://aws.amazon.com/codebuild/)
 
 You can view a running copy of this app, deployed on AWS at: [fargate.chat](https://fargate.chat)
 
