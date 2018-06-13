@@ -1,0 +1,46 @@
+version: "3"
+networks:
+  chat:
+
+services:
+  # Launch the Redis used for syncing messages between copies of the client app
+  redis:
+    image: redis
+    networks:
+      - chat
+
+  # Launch a local version of DynamoDB
+  dynamodb-local:
+    networks:
+      - chat
+    build: ./deps/dynamodb-local
+
+  # Ephemeral container used for creating the tables in DynamoDB
+  dynamodb-tables:
+    depends_on:
+      - dynamodb-local
+    networks:
+      - chat
+    build: ./deps/dynamodb-tables
+    environment:
+      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+
+  # The actual client application
+  client:
+    depends_on:
+      - redis
+      - dynamodb-tables
+    networks:
+      - chat
+    build: ./services/client
+    environment:
+      LOCAL: "true"
+      ENV_NAME: test
+      REDIS_ENDPOINT: redis
+      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    ports:
+      - 3000:3000

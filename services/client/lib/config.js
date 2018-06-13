@@ -12,3 +12,5 @@ module.exports = {
   HEARTBEAT_TIMEOUT: 8000,
   HEARTBEAT_INTERVAL: 4000
 };
+
+console.log(JSON.stringify(module.exports.DYNAMODB_ENDPOINT));

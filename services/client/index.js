@@ -5,7 +5,7 @@ var express = require('express');
 var compression = require('compression');
 var path = require('path');
 var enforce = require('express-sslify');
-var config = require('./config');
+var config = require('./lib/config');
 
 var app = express();
 
@@ -354,4 +354,9 @@ io.on('connection', function(socket) {
       });
     }
   });
+});
+
+process.on('SIGTERM', function() {
+  server.close();
+  process.exit(0);
 });

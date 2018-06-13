@@ -6,7 +6,7 @@ var config = require('./config');
 function Message() {
   this.dynamoDB = new AWS.DynamoDB.DocumentClient({
     region: config.REGION,
-    endpoint: config.DYNAMDB_ENDPOINT
+    endpoint: config.DYNAMODB_ENDPOINT
   });
   this.tableName = `${config.ENV_NAME}_Messages`;
 }
