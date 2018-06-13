@@ -5,6 +5,7 @@ var express = require('express');
 var compression = require('compression');
 var path = require('path');
 var enforce = require('express-sslify');
+var config = require('./config');
 
 var app = express();
 
@@ -19,20 +20,18 @@ if (!process.env.LOCAL) {
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var redis = require('socket.io-redis');
-io.adapter(redis({ host: process.env.REDIS_ENDPOINT, port: 6379 }));
+io.adapter(redis({ host: config.REDIS_ENDPOINT, port: 6379 }));
 
 var Presence = require('./lib/presence');
 var User = require('./lib/user');
 var Message = require('./lib/message');
 
 // Lower the heartbeat timeout (helps us expire disconnected people faster)
-io.set('heartbeat timeout', 8000);
-io.set('heartbeat interval', 4000);
+io.set('heartbeat timeout', config.HEARTBEAT_TIMEOUT);
+io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
 
-var port = process.env.PORT || 3000;
-
-server.listen(port, function() {
-  console.log('Server listening at port %d', port);
+server.listen(config.PORT, function() {
+  console.log('Server listening at port %d', config.PORT);
 });
 
 // Routing

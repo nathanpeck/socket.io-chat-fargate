@@ -1,12 +1,14 @@
 var AWS = require('aws-sdk');
 var bcrypt = require('bcrypt');
+var config = require('./config');
 
 function User() {
   this.saltRounds = 10;
   this.dynamoDB = new AWS.DynamoDB.DocumentClient({
-    region: process.env.REGION
+    region: config.REGION,
+    endpoint: config.DYNAMDB_ENDPOINT
   });
-  this.tableName = `${process.env.ENV_NAME}_Users`;
+  this.tableName = `${config.ENV_NAME}_Users`;
 }
 module.exports = new User();
 

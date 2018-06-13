@@ -1,12 +1,14 @@
 var AWS = require('aws-sdk');
 var crypto = require('crypto');
 var _ = require('lodash');
+var config = require('./config');
 
 function Message() {
   this.dynamoDB = new AWS.DynamoDB.DocumentClient({
-    region: process.env.REGION
+    region: config.REGION,
+    endpoint: config.DYNAMDB_ENDPOINT
   });
-  this.tableName = `${process.env.ENV_NAME}_Messages`;
+  this.tableName = `${config.ENV_NAME}_Messages`;
 }
 module.exports = new Message();
 
