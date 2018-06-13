@@ -83,7 +83,7 @@ Resources:
                 Fn::ImportValue:
                   !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
             - Name: DYNAMODB_ENDPOINT
-              Value: !Join ['.', ['https://dynamodb', !Ref ' AWS::Region', 'amazonaws.com']]
+              Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           PortMappings:
