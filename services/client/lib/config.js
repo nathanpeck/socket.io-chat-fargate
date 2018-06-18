@@ -13,4 +13,4 @@ module.exports = {
   HEARTBEAT_INTERVAL: 4000
 };
 
-console.log(JSON.stringify(module.exports.DYNAMODB_ENDPOINT));
+module.exports.SELF_URL = process.env.SELF_URL || 'http://localhost:' + module.exports.PORT;

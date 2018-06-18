@@ -8,12 +8,16 @@ services:
     image: redis
     networks:
       - chat
+    ports:
+      - 6379:6379
 
   # Launch a local version of DynamoDB
   dynamodb-local:
     networks:
       - chat
     build: ./deps/dynamodb-local
+    ports:
+      - 8000:8000
 
   # Ephemeral container used for creating the tables in DynamoDB
   dynamodb-tables:
@@ -44,3 +48,13 @@ services:
       AWS_SECRET_ACCESS_KEY: test
     ports:
       - 3000:3000
+
+  # The test suite
+  test:
+    depends_on:
+      - client
+    networks:
+      - chat
+    build: ./services/test-suite
+    environment:
+      SELF_URL: http://client:3000

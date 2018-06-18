@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "A simple chat client using socket.io",
   "main": "index.js",
-  "author": "Grant Timmerman",
   "private": true,
   "license": "BSD",
   "dependencies": {
@@ -18,8 +17,14 @@
     "socket.io": "2.0.4",
     "socket.io-redis": "5.2.0"
   },
+  "devDependencies": {
+    "chai": "4.1.2",
+    "mocha": "5.2.0",
+    "request-promise-native": "1.0.5",
+    "request": "2.87.0"
+  },
   "scripts": {
-    "start": "LOCAL=true REGION=us-east-1 ENV_NAME=production node index.js"
+    "start": "LOCAL=true REGION=us-east-1 ENV_NAME=test REDIS_ENDPOINT=localhost DYNAMODB_ENDPOINT=http://localhost:8000 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test node index.js"
   },
   "eslintConfig": {
     "globals": {
