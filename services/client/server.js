@@ -56,7 +56,7 @@ io.on('connection', function(socket) {
     }
 
     if (!data.message || !_.isString(data.message)) {
-      return callback('Must pass a parameter `room` which is a string');
+      return callback('Must pass a parameter `message` which is a string');
     }
 
     var messageBody = {
@@ -77,11 +77,15 @@ io.on('connection', function(socket) {
     return callback(null, messageBody);
   });
 
-  socket.on('message list', async function(room, callback) {
+  socket.on('message list', async function(from, callback) {
     var messages;
 
+    if (!from.room || !_.isString(from.room)) {
+      return callback('Must pass a parameter `from.room` which is a string');
+    }
+
     try {
-      messages = await Message.listFromRoom(room);
+      messages = await Message.listFromRoom(from);
     } catch (e) {
       return callback(e);
     }
