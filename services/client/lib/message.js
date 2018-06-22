@@ -24,6 +24,8 @@ module.exports = new Message();
 **/
 Message.prototype.add = async function(message) {
   try {
+    var id = message.time + ':' + crypto.randomBytes(7).toString('hex');
+
     await this.dynamoDB.put({
       TableName: this.tableName,
       Item: {
@@ -32,9 +34,11 @@ Message.prototype.add = async function(message) {
         avatar: message.avatar,
         content: JSON.stringify(message.content),
         time: message.time,
-        message: message.time + ':' + crypto.randomBytes(7).toString('hex')
+        message: id
       }
     }).promise();
+
+    return id;
   } catch (e) {
     console.error(e);
 
