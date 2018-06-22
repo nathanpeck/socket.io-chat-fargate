@@ -40,3 +40,9 @@ make build
 ```
 
 This updates the client application.
+
+To run integration tests execute:
+
+```
+make test
+```
