@@ -206,10 +206,7 @@ describe('The API', function() {
     });
   });
 
-  var message = {
-    room: 'test',
-    message: 'hey what up?'
-  };
+  var sentMessages = [];
 
   it('when authenticated client sends good message it should be emitted to all', function(done) {
     var callbacks = 2;
@@ -219,37 +216,45 @@ describe('The API', function() {
       done();
     };
 
-    newSocket.emit('new message', message, function(err, message) {
-      expect(err).to.equal(null);
+    newSocket.emit(
+      'new message',
+      {
+        room: 'general',
+        message: 'hey what up?'
+      },
+      function(err, message) {
+        expect(err).to.equal(null);
 
-      expect(message).to.be.an('object');
+        expect(message).to.be.an('object');
 
-      expect(message).to.have.property('room');
-      expect(message.room).to.be.a('string');
+        expect(message).to.have.property('room');
+        expect(message.room).to.be.a('string');
 
-      expect(message).to.have.property('username');
-      expect(message.username).to.be.a('string');
+        expect(message).to.have.property('username');
+        expect(message.username).to.be.a('string');
 
-      expect(message).to.have.property('avatar');
-      expect(message.avatar).to.be.a('string');
+        expect(message).to.have.property('avatar');
+        expect(message.avatar).to.be.a('string');
 
-      expect(message).to.have.property('room');
-      expect(message.room).to.be.a('string');
+        expect(message).to.have.property('room');
+        expect(message.room).to.be.a('string');
 
-      expect(message).to.have.property('time');
-      expect(message.time).to.be.a('number');
+        expect(message).to.have.property('time');
+        expect(message.time).to.be.a('number');
 
-      expect(message).to.have.property('content');
-      expect(message.content).to.be.a('object');
+        expect(message).to.have.property('content');
+        expect(message.content).to.be.a('object');
 
-      expect(message.content).to.have.property('text');
-      expect(message.content.text).to.be.a('string');
+        expect(message.content).to.have.property('text');
+        expect(message.content.text).to.be.a('string');
 
-      --callbacks > 0 || end();
-    });
+        --callbacks > 0 || end();
+      }
+    );
 
     socket.on('new message', function(message) {
       expect(message).to.be.an('object');
+      sentMessages.unshift(message);
 
       expect(message).to.have.property('room');
       expect(message.room).to.be.a('string');
@@ -276,9 +281,87 @@ describe('The API', function() {
     });
   });
 
-  it('fetching the "message list" should return the right message', function(done) {
-    socket.emit('message list', { room: 'test' }, function(err, results) {
-      console.log(JSON.stringify(results, null, 2));
+  it('when other authenticated client sends good message it should be emitted to all', function(done) {
+    var callbacks = 2;
+
+    var end = function() {
+      socket.off('new message');
+      done();
+    };
+
+    socket.emit(
+      'new message',
+      {
+        room: 'general',
+        message: 'nothing much, how about you?'
+      },
+      function(err, message) {
+        expect(err).to.equal(null);
+
+        expect(message).to.be.an('object');
+
+        expect(message).to.have.property('room');
+        expect(message.room).to.be.a('string');
+
+        expect(message).to.have.property('username');
+        expect(message.username).to.be.a('string');
+
+        expect(message).to.have.property('avatar');
+        expect(message.avatar).to.be.a('string');
+
+        expect(message).to.have.property('room');
+        expect(message.room).to.be.a('string');
+
+        expect(message).to.have.property('time');
+        expect(message.time).to.be.a('number');
+
+        expect(message).to.have.property('content');
+        expect(message.content).to.be.a('object');
+
+        expect(message.content).to.have.property('text');
+        expect(message.content.text).to.be.a('string');
+
+        --callbacks > 0 || end();
+      }
+    );
+
+    newSocket.on('new message', function(message) {
+      expect(message).to.be.an('object');
+      sentMessages.unshift(message);
+
+      expect(message).to.have.property('room');
+      expect(message.room).to.be.a('string');
+
+      expect(message).to.have.property('username');
+      expect(message.username).to.be.a('string');
+
+      expect(message).to.have.property('avatar');
+      expect(message.avatar).to.be.a('string');
+
+      expect(message).to.have.property('room');
+      expect(message.room).to.be.a('string');
+
+      expect(message).to.have.property('time');
+      expect(message.time).to.be.a('number');
+
+      expect(message).to.have.property('content');
+      expect(message.content).to.be.a('object');
+
+      expect(message.content).to.have.property('text');
+      expect(message.content.text).to.be.a('string');
+
+      --callbacks > 0 || end();
+    });
+  });
+
+  it('fetching the "message list" should return the right messages in the right order', function(done) {
+    socket.emit('message list', { room: 'general' }, function(err, results) {
+      expect(results.messages).to.be.a('array');
+
+      // Ensure the messages we sent are there, match, and are in the right order.
+      expect(results.messages[0]).to.deep.equal(sentMessages[0]);
+      expect(results.messages[1]).to.deep.equal(sentMessages[1]);
+
       done();
     });
   });

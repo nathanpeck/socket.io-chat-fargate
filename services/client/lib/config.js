@@ -9,6 +9,7 @@ module.exports = {
   REDIS_ENDPOINT: process.env.REDIS_ENDPOINT,
   DYNAMODB_ENDPOINT: new AWS.Endpoint(process.env.DYNAMODB_ENDPOINT),
 
+  // Controls how often clients ping back and forth
   HEARTBEAT_TIMEOUT: 8000,
   HEARTBEAT_INTERVAL: 4000
 };

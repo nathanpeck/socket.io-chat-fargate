@@ -69,10 +69,10 @@ io.on('connection', function(socket) {
       avatar: socket.avatar
     };
 
-    socket.broadcast.emit('new message', messageBody);
-
     // Store the messages in DynamoDB
-    await Message.add(messageBody);
+    messageBody.message = await Message.add(messageBody);
+
+    socket.broadcast.emit('new message', messageBody);
 
     return callback(null, messageBody);
   });
