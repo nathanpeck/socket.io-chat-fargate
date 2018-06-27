@@ -1,6 +1,7 @@
 # Fargate.chat
 
 [![app](./docs/images/running-app.png)](https://fargate.chat)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnathanpeck%2Fsocket.io-chat-fargate.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnathanpeck%2Fsocket.io-chat-fargate?ref=badge_shield)
 
 A simple Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services, running in Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/).
 
@@ -46,3 +47,7 @@ To run integration tests execute:
 ```
 make test
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnathanpeck%2Fsocket.io-chat-fargate.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnathanpeck%2Fsocket.io-chat-fargate?ref=badge_large)
