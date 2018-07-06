@@ -8,6 +8,9 @@ module.exports = {
 
   REDIS_ENDPOINT: process.env.REDIS_ENDPOINT,
   DYNAMODB_ENDPOINT: new AWS.Endpoint(process.env.DYNAMODB_ENDPOINT),
+  SNS_ENDPOINT: new AWS.Endpoint(process.env.SNS_ENDPOINT),
+
+  MESSAGE_SENT_SNS_ARN: process.env.MESSAGE_SENT_SNS_ARN,
 
   // Controls how often clients ping back and forth
   HEARTBEAT_TIMEOUT: 8000,

@@ -9,6 +9,11 @@ function Message() {
     endpoint: config.DYNAMODB_ENDPOINT
   });
   this.tableName = `${config.ENV_NAME}_Messages`;
+
+  this.SNS = new AWS.SNS({
+    region: config.REGION,
+    endpoint: config.SNS_ENDPOINT
+  });
 }
 module.exports = new Message();
 
@@ -23,9 +28,9 @@ module.exports = new Message();
   *   @param {Date} message.time
 **/
 Message.prototype.add = async function(message) {
-  try {
-    var id = message.time + ':' + crypto.randomBytes(7).toString('hex');
+  var id = message.time + ':' + crypto.randomBytes(7).toString('hex');
 
+  try {
     await this.dynamoDB.put({
       TableName: this.tableName,
       Item: {
@@ -37,13 +42,31 @@ Message.prototype.add = async function(message) {
         message: id
       }
     }).promise();
-
-    return id;
   } catch (e) {
     console.error(e);
-
-    throw new Error('Failed to insert new user in database');
+    throw new Error('Failed to insert new message in database');
   }
+
+  // Publish onto the SNS topic so that subscribing services get notified
+  // Happens aysnchronously and does not block the return.
+  try {
+    this.SNS.publish({
+      Message: JSON.stringify({
+        room: message.room,
+        username: message.username,
+        avatar: message.avatar,
+        content: message.content,
+        time: message.time,
+        message: id
+      }),
+      TopicArn: config.MESSAGE_SENT_SNS_ARN
+    }).promise();
+  } catch (e) {
+    console.error(e);
+    throw new Error('Failed to publish MessageSent notification');
+  }
+
+  return id;
 };
 
 /**

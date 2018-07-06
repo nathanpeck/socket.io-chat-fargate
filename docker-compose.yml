@@ -56,15 +56,33 @@ services:
       DYNAMODB_ENDPOINT: http://local-stack:4569
       SQS_ENDPOINT: http://local-stack:4576
       SNS_ENDPOINT: http://local-stack:4575
+      MESSAGE_SENT_SNS_ARN: arn:aws:sns:us-east-1:123456789012:test_MessageSent
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
     ports:
       - 3000:3000
 
+  # Background worker that cardifies messages
+  message-cards:
+    depends_on:
+      - redis
+      - bootstrap-resources
+    networks:
+      - chat
+    build: ./services/message-cards
+    environment:
+      LOCAL: "true"
+      ENV_NAME: test
+      REDIS_ENDPOINT: redis
+      QUEUE_URL: http://local-stack:4576/queue/test_MessagesToCardify
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+
   # The test suite
   test:
     depends_on:
       - client
+      - message-cards
     networks:
       - chat
     build: ./services/test-suite
