@@ -12,5 +12,5 @@ RUN apk -v --update add \
 VOLUME /root/.aws
 VOLUME /project
 WORKDIR /project
-ADD tables.sh .
-ENTRYPOINT ["sh", "tables.sh"]
+ADD bootstrap.sh .
+ENTRYPOINT ["sh", "bootstrap.sh"]
