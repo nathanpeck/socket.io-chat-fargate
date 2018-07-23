@@ -11,14 +11,16 @@ var poller = new Squiss({
   maxInFlight: 50  // Handle a max of 50 messages concurrently.
 });
 
+console.log('Message card service up and ready to poll');
+
 poller.start();
 
-poller.on('message', (msg) => {
+poller.on('message', function(msg) {
   console.log(JSON.stringify(msg.body));
   msg.del();
 });
 
 process.on('SIGTERM', function() {
-  console.log('Received SIGTERM, shutting down polling');
+  console.log('Received SIGTERM, shutting down message card polling');
   poller.stop();
 });

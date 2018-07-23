@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.6.0",
+    "cheerio": "1.0.0-rc.2",
     "redis": "2.8.0",
     "socket.io-redis": "5.2.0",
     "squiss": "2.2.1"

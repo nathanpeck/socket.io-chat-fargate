@@ -148,7 +148,7 @@ Resources:
     DeletionPolicy: Retain
 
   # This is the definition of how to build the code in the repository
-  CodeBuildProject:
+  ChatFrontendBuild:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
@@ -166,6 +166,43 @@ Resources:
             build:
               commands:
                 - docker build --tag "${IMAGE_URI}" ./services/client
+            post_build:
+              commands:
+                - docker push "$IMAGE_URI"
+                - printf '{"ImageUri":"%s"}' "$IMAGE_URI" > build.json
+          artifacts:
+            files: build.json
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:17.09.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  # This is the definition of how to build the code in the repository
+  MessageCardsBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - $(aws ecr get-login --no-include-email)
+                - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+                - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+            build:
+              commands:
+                - docker build --tag "${IMAGE_URI}" ./services/message-cards
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
@@ -241,7 +278,7 @@ Resources:
         - Name: ChatResources
           Actions:
             # Deploy the chat resources
-            - Name: Deploy
+            - Name: Build architecture and containers
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -262,7 +299,7 @@ Resources:
               OutputArtifacts:
                 - Name: ChatResources
 
-            # And build the chat docker image
+            # Build the chat frontend docker image
             - Name: Build
               ActionTypeId:
                 Category: Build
@@ -270,17 +307,32 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CodeBuildProject
+                ProjectName: !Ref ChatFrontendBuild
               InputArtifacts:
                 - Name: Source
               OutputArtifacts:
-                - Name: BuildOutput
+                - Name: FrontendBuildOutput
+              RunOrder: 1
+
+            # Build the backend worker image
+            - Name: BuildMessageCards
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref MessageCardsBuild
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: MessageCardsBuildOutput
               RunOrder: 1
 
         # Finally we deploy the Fargate service to the cluster
-        - Name: Deploy
+        - Name: Deploy containers
           Actions:
-            - Name: Deploy
+            - Name: Deploy frontend container
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -301,7 +353,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: Source
-                - Name: BuildOutput
+                - Name: FrontendBuildOutput
 
 Outputs:
   PipelineUrl:
