@@ -181,7 +181,7 @@ Resources:
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
-      Name: !Ref AWS::StackName-chat-frontend
+      Name: !Sub ${AWS::StackName}-chat-frontend
       ServiceRole: !Ref CodeBuildServiceRole
 
   # This is the definition of how to build the code in the repository
@@ -218,7 +218,7 @@ Resources:
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
-      Name: !Ref AWS::StackName-message-cards
+      Name: !Sub ${AWS::StackName}-message-cards
       ServiceRole: !Ref CodeBuildServiceRole
 
   # This pipeline defines the steps to build, deploy, and release the application
@@ -234,7 +234,7 @@ Resources:
         # First we have to pull the source code from the Github repository.
         - Name: Source
           Actions:
-            - Name: App
+            - Name: Fetch-source
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -250,7 +250,7 @@ Resources:
               RunOrder: 1
 
         # Now we deploy the base resources: the cluster and VPC itself.
-        - Name: BaseResources
+        - Name: Create-network
           Actions:
             - Name: Deploy
               ActionTypeId:
@@ -275,10 +275,10 @@ Resources:
                 - Name: BaseResources
 
         # And we deploy the application resources (Elasticache, DynamoDB, etc)
-        - Name: ChatResources
+        - Name: Build-dependencies-and-containers
           Actions:
             # Deploy the chat resources
-            - Name: Build architecture and containers
+            - Name: Queues-roles-and-tables
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -300,7 +300,7 @@ Resources:
                 - Name: ChatResources
 
             # Build the chat frontend docker image
-            - Name: Build
+            - Name: Build-chat-frontend
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -315,7 +315,7 @@ Resources:
               RunOrder: 1
 
             # Build the backend worker image
-            - Name: BuildMessageCards
+            - Name: Build-message-cards-service
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -330,9 +330,9 @@ Resources:
               RunOrder: 1
 
         # Finally we deploy the Fargate service to the cluster
-        - Name: Deploy containers
+        - Name: Deploy-containers
           Actions:
-            - Name: Deploy frontend container
+            - Name: Deploy-frontend-container
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -354,6 +354,29 @@ Resources:
               InputArtifacts:
                 - Name: Source
                 - Name: FrontendBuildOutput
+
+            - Name: Deploy-message-card-container
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
+                StackName: !Sub ${EnvironmentName}-MessageCards
+                TemplatePath: Source::message-cards-service.yml
+                Capabilities: CAPABILITY_IAM
+                ParameterOverrides: !Sub |
+                  {
+                    "EnvironmentName": "${EnvironmentName}",
+                    "ImageUrl": {
+                      "Fn::GetParam" : ["BuildOutput", "build.json", "ImageUri"]
+                    }
+                  }
+              InputArtifacts:
+                - Name: Source
+                - Name: MessageCardsBuildOutput
 
 Outputs:
   PipelineUrl:
