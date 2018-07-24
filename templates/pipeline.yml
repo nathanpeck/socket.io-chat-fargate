@@ -262,7 +262,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-BaseResources
-                TemplatePath: Source::cluster.yml
+                TemplatePath: Source::templates/cluster.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
@@ -288,7 +288,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-ChatResources
-                TemplatePath: Source::resources.yml
+                TemplatePath: Source::templates/resources.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
@@ -342,7 +342,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-ChatService
-                TemplatePath: Source::chat-service.yml
+                TemplatePath: Source::templates/chat-service.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
@@ -365,7 +365,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-MessageCards
-                TemplatePath: Source::message-cards-service.yml
+                TemplatePath: Source::templates/message-cards-service.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
