@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', function(socket) {
   const connection = tracer.startSpan('web.request');
-  connection.tag('http.url', '/connection');
+  connection.setTag('http.url', '/connection');
 
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
