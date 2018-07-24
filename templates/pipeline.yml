@@ -142,6 +142,7 @@ Resources:
                   - "route53:*"
                   - "sns:*"
                   - "sqs:*"
+                  - "ssm:*"
                 Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
