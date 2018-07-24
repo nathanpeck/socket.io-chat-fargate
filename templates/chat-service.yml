@@ -110,6 +110,8 @@ Resources:
               Value: localhost
             - Name: DD_SERVICE_NAME
               Value: chat-frontend
+            - Name: DD_APM_ANALYZED_SPANS
+              Value: chat-frontend-http-client|http.request=1,chat-frontend|express.request=1,chat-frontend|ws.connection=1
             - Name: DD_ENV
               Value: !Ref EnvironmentName
           PortMappings:
