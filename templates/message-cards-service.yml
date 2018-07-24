@@ -64,10 +64,10 @@ Resources:
         - FARGATE
       ExecutionRoleArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ECSTaskExecutionRole']]
+          !Sub '${EnvironmentName}:ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'MessageCardsRole']]
+          !Sub '${EnvironmentName}:MessageCardsRole'
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
@@ -81,13 +81,13 @@ Resources:
             - Name: REDIS_ENDPOINT
               Value:
                 Fn::ImportValue:
-                  !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+                  !Sub '${EnvironmentName}:RedisEndpoint'
             - Name: SQS_ENDPOINT
-              Value: !Join ['.', ['https://sqs', !Ref 'AWS::Region', 'amazonaws.com']]
+              Value: !Sub 'https://sqs.${AWS::Region}.amazonaws.com'
             - Name: QUEUE_URL
               Value:
                 Fn::ImportValue:
-                  !Join [':', [!Ref 'EnvironmentName', 'MessageCardQueueUrl']]
+                  !Sub '${EnvironmentName}:MessagesToCardifyQueue'
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           LogConfiguration:
