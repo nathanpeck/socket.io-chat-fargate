@@ -138,7 +138,7 @@ Resources:
               Action:
                 - "sqs:*"
               Resource:
-                - !Ref MessagesToCardifyQueue
+                - !GetAtt MessagesToCardifyQueue.Arn
 
   # An SNS topic for the chat service to publish to
   MessageSentTopic:
