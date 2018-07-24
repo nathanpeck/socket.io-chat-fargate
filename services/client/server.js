@@ -39,6 +39,7 @@ io.on('connection', function(socket) {
   const connection = tracer.startSpan('ws');
   connection.setTag('service.name', 'frontend-ws');
   connection.setTag('resource.name', 'connection');
+  tracer.scopeManager().activate(connection);
 
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
@@ -57,6 +58,7 @@ io.on('connection', function(socket) {
     const span = tracer.startSpan('ws');
     span.setTag('service.name', 'frontend-ws');
     span.setTag('resource.name', 'new message');
+    tracer.scopeManager().activate(span);
 
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
