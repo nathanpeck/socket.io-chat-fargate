@@ -348,7 +348,7 @@ Resources:
                   {
                     "EnvironmentName": "${EnvironmentName}",
                     "ImageUrl": {
-                      "Fn::GetParam" : ["BuildOutput", "build.json", "ImageUri"]
+                      "Fn::GetParam" : ["FrontendBuildOutput", "build.json", "ImageUri"]
                     }
                   }
               InputArtifacts:
@@ -371,7 +371,7 @@ Resources:
                   {
                     "EnvironmentName": "${EnvironmentName}",
                     "ImageUrl": {
-                      "Fn::GetParam" : ["BuildOutput", "build.json", "ImageUri"]
+                      "Fn::GetParam" : ["MessageCardsBuildOutput", "build.json", "ImageUri"]
                     }
                   }
               InputArtifacts:
