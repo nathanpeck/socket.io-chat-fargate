@@ -4,8 +4,10 @@
 const tracer = require('dd-trace');
 tracer.init();
 
-var server = require('./server');
 var config = require('./lib/config');
+config.tracer = tracer;
+
+var server = require('./server');
 
 server.listen(config.PORT, function() {
   console.log('Server listening at port %d', config.PORT);

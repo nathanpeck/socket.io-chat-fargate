@@ -26,6 +26,8 @@ var Presence = require('./lib/presence');
 var User = require('./lib/user');
 var Message = require('./lib/message');
 
+var tracer = config.tracer;
+
 // Lower the heartbeat timeout (helps us expire disconnected people faster)
 io.set('heartbeat timeout', config.HEARTBEAT_TIMEOUT);
 io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
@@ -34,6 +36,8 @@ io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
 app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', function(socket) {
+  const connection = tracer.startSpan('ws connection');
+
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
 
@@ -46,6 +50,8 @@ io.on('connection', function(socket) {
 
   // when the client emits 'new message', this listens and executes
   socket.on('new message', async function(data, callback) {
+    const span = tracer.startSpan('ws new message');
+
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
       return callback('Can\'t send a message until you are authenticated');
@@ -73,6 +79,8 @@ io.on('connection', function(socket) {
     messageBody.message = await Message.add(messageBody);
 
     socket.broadcast.emit('new message', messageBody);
+
+    span.finish();
 
     return callback(null, messageBody);
   });
@@ -354,6 +362,8 @@ io.on('connection', function(socket) {
       });
     }
   });
+
+  connection.finish();
 });
 
 module.exports = server;
