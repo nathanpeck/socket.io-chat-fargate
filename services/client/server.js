@@ -36,8 +36,9 @@ io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
 app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', function(socket) {
-  const connection = tracer.startSpan('web.request');
-  connection.setTag('http.url', '/connection');
+  const connection = tracer.startSpan('ws');
+  connection.setTag('service.name', 'frontend-ws');
+  connection.setTag('resource.name', 'connection');
 
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
@@ -47,11 +48,15 @@ io.on('connection', function(socket) {
     io.to(socket.id).emit('presence', {
       numUsers: users.length
     });
+
+    connection.finish();
   });
 
   // when the client emits 'new message', this listens and executes
   socket.on('new message', async function(data, callback) {
-    const span = tracer.startSpan('ws.connection');
+    const span = tracer.startSpan('ws');
+    connection.setTag('service.name', 'frontend-ws');
+    connection.setTag('resource.name', 'new message');
 
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
@@ -366,8 +371,6 @@ io.on('connection', function(socket) {
       });
     }
   });
-
-  connection.finish();
 });
 
 module.exports = server;
