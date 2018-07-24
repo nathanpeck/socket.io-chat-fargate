@@ -36,7 +36,8 @@ io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
 app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', function(socket) {
-  const connection = tracer.startSpan('ws connection');
+  const connection = tracer.startSpan('web.request');
+  connection.tag('http.url', '/connection');
 
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
@@ -50,7 +51,7 @@ io.on('connection', function(socket) {
 
   // when the client emits 'new message', this listens and executes
   socket.on('new message', async function(data, callback) {
-    const span = tracer.startSpan('ws new message');
+    const span = tracer.startSpan('ws.connection');
 
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
@@ -64,6 +65,9 @@ io.on('connection', function(socket) {
     if (!data.message || !_.isString(data.message)) {
       return callback('Must pass a parameter `message` which is a string');
     }
+
+    span.setTag('room', data.room);
+    span.setTag('user', socket.username);
 
     var messageBody = {
       room: data.room,
