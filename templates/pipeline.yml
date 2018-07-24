@@ -16,7 +16,11 @@ Parameters:
 
 Resources:
   # Create the ECR respository to hold built docker images
-  Repository:
+  ChatFrontendRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+
+  MessageCardsRepository:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
 
@@ -51,7 +55,17 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:GetObjectVersion
-              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ChatFrontendRepository}
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${MessageCardsRepository}
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -183,7 +197,7 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ChatFrontendRepository}
       Name: !Sub ${AWS::StackName}-chat-frontend
       ServiceRole: !Ref CodeBuildServiceRole
 
@@ -220,7 +234,7 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MessageCardsRepository}
       Name: !Sub ${AWS::StackName}-message-cards
       ServiceRole: !Ref CodeBuildServiceRole
 
