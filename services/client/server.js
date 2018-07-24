@@ -55,8 +55,8 @@ io.on('connection', function(socket) {
   // when the client emits 'new message', this listens and executes
   socket.on('new message', async function(data, callback) {
     const span = tracer.startSpan('ws');
-    connection.setTag('service.name', 'frontend-ws');
-    connection.setTag('resource.name', 'new message');
+    span.setTag('service.name', 'frontend-ws');
+    span.setTag('resource.name', 'new message');
 
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
