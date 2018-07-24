@@ -8,7 +8,7 @@ Parameters:
                  Used to locate other resources in the same environment.
   ServiceName:
     Type: String
-    Default: chat
+    Default: message-cards
     Description: A name for the service
   ImageUrl:
     Type: String
