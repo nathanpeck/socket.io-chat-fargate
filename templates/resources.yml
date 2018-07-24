@@ -157,7 +157,7 @@ Resources:
   MessagesSentToCardifySubscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Ref MessagesToCardifyQueue
+      Endpoint: !GetAtt MessagesToCardifyQueue.Arn
       Protocol: sqs
       TopicArn: !Ref MessageSentTopic
 
