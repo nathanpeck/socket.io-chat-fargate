@@ -82,6 +82,8 @@ Resources:
               Value:
                 Fn::ImportValue:
                   !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+            - Name: SQS_ENDPOINT
+              Value: !Join ['.', ['https://sqs', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           LogConfiguration:

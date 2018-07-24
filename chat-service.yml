@@ -84,6 +84,8 @@ Resources:
                   !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
             - Name: DYNAMODB_ENDPOINT
               Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
+            - Name: SNS_ENDPOINT
+              Value: !Join ['.', ['https://sns', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           PortMappings:
