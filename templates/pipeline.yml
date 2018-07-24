@@ -18,13 +18,15 @@ Resources:
   # Create the ECR respository to hold built docker images
   ChatFrontendRepository:
     Type: AWS::ECR::Repository
-    RepositoryName: !Sub ${EnvironmentName}-chat-web
     DeletionPolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${EnvironmentName}-chat-web
 
   MessageCardsRepository:
     Type: AWS::ECR::Repository
-    RepositoryName: !Sub ${EnvironmentName}-message-cards
     DeletionPolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${EnvironmentName}-message-cards
 
   # A role used to give CodeBuild permission to access code,
   # build it, and upload the build results to ECR

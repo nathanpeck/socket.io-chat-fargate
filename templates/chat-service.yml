@@ -78,8 +78,12 @@ Resources:
           Environment:
             - Name: DD_API_KEY
               Value: !Ref DatadogApiKey
+            - Name: DD_APM_ENABLED
+              Value: true
             - Name: ECS_FARGATE
               Value: true
+            - Name: DD_RECEIVER_PORT
+              Value: 8126
         - Name: !Ref 'ServiceName'
           Image: !Ref 'ImageUrl'
           Environment:
@@ -100,6 +104,14 @@ Resources:
                 Fn::ImportValue: !Sub ${EnvironmentName}:MessageSentTopic
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
+            - Name: DD_TRACE_AGENT_PORT
+              Value: 8126
+            - Name: DD_TRACE_AGENT_HOSTNAME
+              Value: localhost
+            - Name: DD_SERVICE_NAME
+              Value: chat-frontend
+            - Name: DD_ENV
+              Value: !Ref EnvironmentName
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
           LogConfiguration:

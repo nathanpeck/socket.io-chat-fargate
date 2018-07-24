@@ -1,4 +1,9 @@
 // Entrypoint
+
+// Initialize the Datadog APM tracer.
+const tracer = require('dd-trace');
+tracer.init();
+
 var server = require('./server');
 var config = require('./lib/config');
 

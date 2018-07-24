@@ -9,6 +9,7 @@
     "aws-sdk": "2.262.1",
     "bcrypt": "2.0.1",
     "compression": "^1.7.2",
+    "dd-trace": "0.5.1",
     "express": "4.16.3",
     "express-sslify": "^1.2.0",
     "lodash": "^4.17.5",
