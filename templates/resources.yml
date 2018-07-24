@@ -96,20 +96,70 @@ Resources:
           Action: ['sts:AssumeRole']
       Path: /
       Policies:
-      - PolicyName: users-dynamodb-table
-        PolicyDocument:
-          Statement:
-          - Effect: Allow
-            Action:
-              - "dynamodb:PutItem"
-              - "dynamodb:GetItem"
-              - "dynamodb:Query"
-              - "dynamodb:Scan"
-              - "dynamodb:UpdateItem"
-              - "dynamodb:DeleteItem"
-            Resource:
-              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
-              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
+        - PolicyName: users-dynamodb-table
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+                - "dynamodb:GetItem"
+                - "dynamodb:Query"
+                - "dynamodb:Scan"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:DeleteItem"
+              Resource:
+                - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
+                - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
+        - PolicyName: publish-to-messagesent-topic
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - "sns:publish"
+              Resource:
+                - !Ref MessageSent
+
+  # Role for the service that generates message cards
+  MessageCardsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: "ecs-tasks.amazonaws.com"
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: use-messages-queue
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - "sqs:*"
+              Resource:
+                - !Ref MessagesToCardify
+
+  # An SNS topic for the chat service to publish to
+  MessageSentTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: A message has been sent
+      TopicName: !Sub ${EnvironmentName}-MessageSent
+
+  # An SQS queue that holds sent messages
+  MessagesToCardifyQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${EnvironmentName}-MessagesToCardify
+
+  # A subscription so that the MessagesToCardify queue receives messages sent to the MessageSent topic
+  MessagesSentToCardifySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref MessagesToCardifyQueue
+      Protocol: sqs
+      TopicArn: !Ref MessageSentTopic
 
 Outputs:
   RedisEndpoint:
@@ -122,4 +172,19 @@ Outputs:
     Value: !GetAtt 'ChatServiceRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatServiceRole' ] ]
+  MessageCardsRole:
+    Description: The role of the service that generates message cards
+    Value: !GetAtt 'MessageCardsRole.Arn'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessageCardsRole' ] ]
+  MessageSentTopicArn:
+    Description: The ARN of the topic that is published to when a message is sent
+    Value: !Ref 'MessageSentTopic'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessageSentTopic' ] ]
+  MessageCardQueueUrl:
+    Description: The URL of the queue that contains messages that need to be cardified
+    Value: !Ref 'MessagesToCardifyQueue'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesToCardifyQueue' ] ]
 

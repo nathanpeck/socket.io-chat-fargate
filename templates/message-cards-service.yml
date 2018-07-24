@@ -67,7 +67,7 @@ Resources:
           !Join [':', [!Ref 'EnvironmentName', 'ECSTaskExecutionRole']]
       TaskRoleArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ChatServiceRole']]
+          !Join [':', [!Ref 'EnvironmentName', 'MessageCardsRole']]
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
@@ -84,6 +84,10 @@ Resources:
                   !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
             - Name: SQS_ENDPOINT
               Value: !Join ['.', ['https://sqs', !Ref 'AWS::Region', 'amazonaws.com']]
+            - Name: QUEUE_URL
+              Value:
+                Fn::ImportValue:
+                  !Join [':', [!Ref 'EnvironmentName', 'MessageCardQueueUrl']]
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           LogConfiguration:

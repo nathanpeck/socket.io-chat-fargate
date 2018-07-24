@@ -43,6 +43,10 @@ Parameters:
     Type: Number
     Default: 2
     Description: How many copies of the service task to run
+  DatadogApiKey:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: DATADOG_API_KEY
+    Description: Import the Datadog API key from Systems Manager Parameter Store
 
 Resources:
   # A log group for storing the container logs for this service
@@ -69,9 +73,14 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'ChatServiceRole']]
       ContainerDefinitions:
+        - Name: datadog-agent
+          Image: datadog/agent:latest
+          Environment:
+            - Name: DD_API_KEY
+              Value: !Ref DatadogApiKey
+            - Name: ECS_FARGATE
+              Value: true
         - Name: !Ref 'ServiceName'
-          Cpu: !Ref 'ContainerCpu'
-          Memory: !Ref 'ContainerMemory'
           Image: !Ref 'ImageUrl'
           Environment:
             - Name: REGION
@@ -86,6 +95,9 @@ Resources:
               Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: SNS_ENDPOINT
               Value: !Join ['.', ['https://sns', !Ref 'AWS::Region', 'amazonaws.com']]
+            - Name: MESSAGE_SENT_SNS_ARN
+              Value:
+                Fn::ImportValue: !Sub ${EnvironmentName}:MessageSentTopic
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           PortMappings:
