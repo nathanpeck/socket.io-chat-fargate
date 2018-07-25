@@ -167,7 +167,8 @@ Resources:
             Action: "sqs:SendMessage"
             Resource: !GetAtt MessagesToCardifyQueue.Arn
             Condition:
-              ArnEquals: !Ref MessageSentTopic
+              ArnEquals:
+                aws:SourceArn: !Ref MessageSentTopic
 
   # A subscription so that the MessagesToCardify queue receives messages sent to the MessageSent topic
   MessagesSentToCardifySubscription:
