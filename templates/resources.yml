@@ -163,8 +163,8 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Principal: *
-            Action: sqs:SendMessage
+            Principal: "*"
+            Action: "sqs:SendMessage"
             Resource: !GetAtt MessagesToCardifyQueue.Arn
             Condition:
               ArnEquals: !Ref MessageSentTopic
