@@ -60,9 +60,7 @@ Message.prototype.add = async function(message) {
         message: id
       }),
       TopicArn: config.MESSAGE_SENT_SNS_ARN
-    }).promise().then(function() {
-      console.log(arguments);
-    });
+    }).promise();
   } catch (e) {
     console.error(e);
     throw new Error('Failed to publish MessageSent notification');
