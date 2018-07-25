@@ -27,7 +27,7 @@ poller.on('message', function(msg) {
   span.setTag('resource.name', 'message');
   tracer.scopeManager().activate(span);
 
-  console.log(JSON.stringify(msg));
+  console.log(JSON.stringify(msg.body));
 
   msg.del();
   span.finish();

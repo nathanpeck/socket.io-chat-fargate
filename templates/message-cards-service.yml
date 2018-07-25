@@ -85,7 +85,7 @@ Resources:
             - Name: DD_RECEIVER_PORT
               Value: 8126
             - Name: DD_APM_ANALYZED_SPANS
-              Value: message-cards|ws=1
+              Value: message-cards|message=1
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
           Memory: !Ref 'ContainerMemory'
