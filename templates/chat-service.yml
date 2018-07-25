@@ -109,9 +109,9 @@ Resources:
             - Name: DD_TRACE_AGENT_HOSTNAME
               Value: localhost
             - Name: DD_SERVICE_NAME
-              Value: chat-frontend
+              Value: frontend-ws
             - Name: DD_APM_ANALYZED_SPANS
-              Value: frontend-ws|ws.connection=1,frontend-ws|ws=1,frontend-ws|connection=1
+              Value: frontend-ws|ws=1
             - Name: DD_ENV
               Value: !Ref EnvironmentName
           PortMappings:
