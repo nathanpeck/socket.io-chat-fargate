@@ -158,7 +158,7 @@ Resources:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !GetAtt MessagesToCardifyQueue.Arn
+        - !Ref MessagesToCardifyQueue
       PolicyDocument:
         Version: 2012-10-17
         Statement:
