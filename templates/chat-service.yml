@@ -84,6 +84,8 @@ Resources:
               Value: true
             - Name: DD_RECEIVER_PORT
               Value: 8126
+            - Name: DD_APM_ANALYZED_SPANS
+              Value: frontend-ws|ws=1
         - Name: !Ref 'ServiceName'
           Image: !Ref 'ImageUrl'
           Environment:
@@ -110,8 +112,6 @@ Resources:
               Value: localhost
             - Name: DD_SERVICE_NAME
               Value: frontend-ws
-            - Name: DD_APM_ANALYZED_SPANS
-              Value: frontend-ws|ws=1
             - Name: DD_ENV
               Value: !Ref EnvironmentName
           PortMappings:
