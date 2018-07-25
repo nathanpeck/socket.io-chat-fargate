@@ -111,7 +111,7 @@ Resources:
             - Name: DD_SERVICE_NAME
               Value: chat-frontend
             - Name: DD_APM_ANALYZED_SPANS
-              Value: frontend-ws|ws=1
+              Value: frontend-ws|connection=1,frontend-ws|ws=1
             - Name: DD_ENV
               Value: !Ref EnvironmentName
           PortMappings:
