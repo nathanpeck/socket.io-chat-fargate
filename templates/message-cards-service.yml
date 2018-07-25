@@ -43,6 +43,10 @@ Parameters:
     Type: Number
     Default: 2
     Description: How many copies of the service task to run
+  DatadogApiKey:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: DATADOG_API_KEY
+    Description: Import the Datadog API key from Systems Manager Parameter Store
 
 Resources:
   # A log group for storing the container logs for this service
@@ -69,6 +73,19 @@ Resources:
         Fn::ImportValue:
           !Sub '${EnvironmentName}:MessageCardsRole'
       ContainerDefinitions:
+        - Name: datadog-agent
+          Image: datadog/agent:latest
+          Environment:
+            - Name: DD_API_KEY
+              Value: !Ref DatadogApiKey
+            - Name: DD_APM_ENABLED
+              Value: true
+            - Name: ECS_FARGATE
+              Value: true
+            - Name: DD_RECEIVER_PORT
+              Value: 8126
+            - Name: DD_APM_ANALYZED_SPANS
+              Value: message-cards|ws=1
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
           Memory: !Ref 'ContainerMemory'
@@ -90,6 +107,14 @@ Resources:
                   !Sub '${EnvironmentName}:MessagesToCardifyQueue'
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
+            - Name: DD_TRACE_AGENT_PORT
+              Value: 8126
+            - Name: DD_TRACE_AGENT_HOSTNAME
+              Value: localhost
+            - Name: DD_SERVICE_NAME
+              Value: message-cards
+            - Name: DD_ENV
+              Value: !Ref EnvironmentName
           LogConfiguration:
             LogDriver: 'awslogs'
             Options:

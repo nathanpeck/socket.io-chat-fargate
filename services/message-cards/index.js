@@ -1,4 +1,10 @@
+// Initialize the Datadog APM tracer.
+const tracer = require('dd-trace');
+tracer.init();
+
 var config = require('./lib/config');
+config.tracer = tracer;
+
 var Squiss = require('squiss');
 
 var poller = new Squiss({
@@ -16,8 +22,15 @@ console.log('Message card service up and ready to poll');
 poller.start();
 
 poller.on('message', function(msg) {
-  console.log(JSON.stringify(msg.body));
+  const span = tracer.startSpan('message');
+  span.setTag('service.name', 'message-cards');
+  span.setTag('resource.name', 'message');
+  tracer.scopeManager().activate(span);
+
+  console.log(JSON.stringify(msg));
+
   msg.del();
+  span.finish();
 });
 
 process.on('SIGTERM', function() {
