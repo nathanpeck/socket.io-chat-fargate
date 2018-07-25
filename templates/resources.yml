@@ -153,6 +153,22 @@ Resources:
     Properties:
       QueueName: !Sub ${EnvironmentName}-MessagesToCardify
 
+  # Add a policy which allows SNS to send traffic to the SQS queue
+  MessageSentToMessageCardQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !GetAtt MessagesToCardifyQueue.Arn
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: *
+            Action: sqs:SendMessage
+            Resource: !GetAtt MessagesToCardifyQueue.Arn
+            Condition:
+              ArnEquals: !Ref MessageSentTopic
+
   # A subscription so that the MessagesToCardify queue receives messages sent to the MessageSent topic
   MessagesSentToCardifySubscription:
     Type: AWS::SNS::Subscription
