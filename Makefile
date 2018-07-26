@@ -20,3 +20,6 @@ cards:
 	docker-compose build message-cards
 	docker-compose up --no-deps -d message-cards
 	docker-compose run --no-deps test
+
+clean:
+	docker system prune -a -f
