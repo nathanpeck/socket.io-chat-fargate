@@ -8,7 +8,7 @@ Parameters:
                  Used to locate other resources in the same environment.
   ServiceName:
     Type: String
-    Default: chat
+    Default: message-cards
     Description: A name for the service
   ImageUrl:
     Type: String
@@ -43,6 +43,10 @@ Parameters:
     Type: Number
     Default: 2
     Description: How many copies of the service task to run
+  DatadogApiKey:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: DATADOG_API_KEY
+    Description: Import the Datadog API key from Systems Manager Parameter Store
 
 Resources:
   # A log group for storing the container logs for this service
@@ -64,11 +68,24 @@ Resources:
         - FARGATE
       ExecutionRoleArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ECSTaskExecutionRole']]
+          !Sub '${EnvironmentName}:ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ChatServiceRole']]
+          !Sub '${EnvironmentName}:MessageCardsRole'
       ContainerDefinitions:
+        - Name: datadog-agent
+          Image: datadog/agent:latest
+          Environment:
+            - Name: DD_API_KEY
+              Value: !Ref DatadogApiKey
+            - Name: DD_APM_ENABLED
+              Value: true
+            - Name: ECS_FARGATE
+              Value: true
+            - Name: DD_RECEIVER_PORT
+              Value: 8126
+            - Name: DD_APM_ANALYZED_SPANS
+              Value: message-cards|message=1
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
           Memory: !Ref 'ContainerMemory'
@@ -81,13 +98,23 @@ Resources:
             - Name: REDIS_ENDPOINT
               Value:
                 Fn::ImportValue:
-                  !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
-            - Name: DYNAMODB_ENDPOINT
-              Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
+                  !Sub '${EnvironmentName}:RedisEndpoint'
+            - Name: SQS_ENDPOINT
+              Value: !Sub 'https://sqs.${AWS::Region}.amazonaws.com'
+            - Name: QUEUE_URL
+              Value:
+                Fn::ImportValue:
+                  !Sub '${EnvironmentName}:MessagesToCardifyQueue'
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
-          PortMappings:
-            - ContainerPort: !Ref 'ContainerPort'
+            - Name: DD_TRACE_AGENT_PORT
+              Value: 8126
+            - Name: DD_TRACE_AGENT_HOSTNAME
+              Value: localhost
+            - Name: DD_SERVICE_NAME
+              Value: message-cards
+            - Name: DD_ENV
+              Value: !Ref EnvironmentName
           LogConfiguration:
             LogDriver: 'awslogs'
             Options:
@@ -100,9 +127,6 @@ Resources:
   # as monitor the number of running tasks and replace any that have crashed
   Service:
     Type: AWS::ECS::Service
-    DependsOn:
-      - HTTPRule
-      - HTTPSRule
     Properties:
       ServiceName: !Ref 'ServiceName'
       Cluster:
@@ -125,69 +149,6 @@ Resources:
             - Fn::ImportValue:
                 !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
       TaskDefinition: !Ref 'TaskDefinition'
-      LoadBalancers:
-        - ContainerName: !Ref 'ServiceName'
-          ContainerPort: !Ref 'ContainerPort'
-          TargetGroupArn: !Ref 'TargetGroup'
-
-  # A target group. This is used for keeping track of all the tasks, and
-  # what IP addresses / port numbers they have. You can query it yourself,
-  # to use the addresses yourself, but most often this target group is just
-  # connected to an application load balancer, or network load balancer, so
-  # it can automatically distribute traffic across all the targets.
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /
-      Matcher:
-        HttpCode: 301
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      TargetType: ip
-      Name: !Join ['-', [!Ref 'EnvironmentName', !Ref 'ServiceName']]
-      Port: 80
-      Protocol: HTTP
-      UnhealthyThresholdCount: 2
-      TargetGroupAttributes:
-        - Key: stickiness.enabled
-          Value: true
-        - Key: deregistration_delay.timeout_seconds
-          Value: 30
-      VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
-
-  # Create rules to forward both HTTP and HTTPS traffic to the service's
-  # target group. The service itself will handle redirecting HTTP traffic
-  # to HTTPS
-  HTTPRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'TargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values: [!Ref 'Path']
-      ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTP']]
-      Priority: !Ref 'Priority'
-  HTTPSRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'TargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values: [!Ref 'Path']
-      ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
-      Priority: !Ref 'Priority'
 
   # Enable autoscaling for this service
   ScalableTarget:

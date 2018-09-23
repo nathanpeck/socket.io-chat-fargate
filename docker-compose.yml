@@ -9,25 +9,35 @@ services:
     networks:
       - chat
     ports:
-      - 6379:6379
+      - 6379
 
-  # Launch a local version of DynamoDB
-  dynamodb-local:
+  # Launch localstack (https://github.com/localstack/localstack)
+  # This container mimics AWS services locally for offline testing
+  # and development purposes.
+  localstack:
+    image: localstack/localstack
     networks:
       - chat
-    build: ./deps/dynamodb-local
     ports:
-      - 8000:8000
+      # DynamoDB Local
+      - 4569
+      # SNS local
+      - 4575
+      # SQS local
+      - 4576
 
-  # Ephemeral container used for creating the tables in DynamoDB
-  dynamodb-tables:
+  # Ephemeral container used for creating the tables in
+  # the local DynamoDB tables, SNS topics, and SQS queues
+  bootstrap-resources:
     depends_on:
-      - dynamodb-local
+      - localstack
     networks:
       - chat
-    build: ./deps/dynamodb-tables
+    build: ./deps/bootstrap-resources
     environment:
-      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      DYNAMODB_ENDPOINT: http://localstack:4569
+      SQS_ENDPOINT: http://localstack:4576
+      SNS_ENDPOINT: http://localstack:4575
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
 
@@ -35,7 +45,7 @@ services:
   client:
     depends_on:
       - redis
-      - dynamodb-tables
+      - bootstrap-resources
     networks:
       - chat
     build: ./services/client
@@ -43,16 +53,36 @@ services:
       LOCAL: "true"
       ENV_NAME: test
       REDIS_ENDPOINT: redis
-      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      DYNAMODB_ENDPOINT: http://localstack:4569
+      SQS_ENDPOINT: http://localstack:4576
+      SNS_ENDPOINT: http://localstack:4575
+      MESSAGE_SENT_SNS_ARN: arn:aws:sns:us-east-1:123456789012:test_MessageSent
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
     ports:
       - 3000:3000
 
+  # Background worker that cardifies messages
+  message-cards:
+    depends_on:
+      - redis
+      - bootstrap-resources
+    networks:
+      - chat
+    build: ./services/message-cards
+    environment:
+      LOCAL: "true"
+      ENV_NAME: test
+      REDIS_ENDPOINT: redis
+      QUEUE_URL: http://localstack:4576/queue/test_MessagesToCardify
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+
   # The test suite
   test:
     depends_on:
       - client
+      - message-cards
     networks:
       - chat
     build: ./services/test-suite

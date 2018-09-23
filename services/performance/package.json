@@ -1,0 +1,18 @@
+{
+  "name": "tests",
+  "version": "0.0.0",
+  "description": "The test suite for the application",
+  "author": "Nathan Peck",
+  "private": true,
+  "license": "BSD",
+  "dependencies": {
+    "async": "2.6.1",
+    "faker": "4.1.0",
+    "socket.io-client": "2.1.1"
+  },
+  "eslintConfig": {
+    "globals": {
+      "Vue": true
+    }
+  }
+}

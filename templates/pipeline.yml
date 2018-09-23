@@ -16,9 +16,17 @@ Parameters:
 
 Resources:
   # Create the ECR respository to hold built docker images
-  Repository:
+  ChatFrontendRepository:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${EnvironmentName}-chat-web
+
+  MessageCardsRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${EnvironmentName}-message-cards
 
   # A role used to give CodeBuild permission to access code,
   # build it, and upload the build results to ECR
@@ -51,7 +59,17 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:GetObjectVersion
-              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ChatFrontendRepository}
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${MessageCardsRepository}
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -140,6 +158,9 @@ Resources:
                   - "application-autoscaling:*"
                   - "cloudwatch:*"
                   - "route53:*"
+                  - "sns:*"
+                  - "sqs:*"
+                  - "ssm:*"
                 Resource: "*"
 
   # While the build is in progress we need a place to store artifacts
@@ -148,7 +169,7 @@ Resources:
     DeletionPolicy: Retain
 
   # This is the definition of how to build the code in the repository
-  CodeBuildProject:
+  ChatFrontendBuild:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
@@ -180,8 +201,45 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}
-      Name: !Ref AWS::StackName
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ChatFrontendRepository}
+      Name: !Sub ${AWS::StackName}-chat-frontend
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  # This is the definition of how to build the code in the repository
+  MessageCardsBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - $(aws ecr get-login --no-include-email)
+                - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+                - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+            build:
+              commands:
+                - docker build --tag "${IMAGE_URI}" ./services/message-cards
+            post_build:
+              commands:
+                - docker push "$IMAGE_URI"
+                - printf '{"ImageUri":"%s"}' "$IMAGE_URI" > build.json
+          artifacts:
+            files: build.json
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:17.09.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MessageCardsRepository}
+      Name: !Sub ${AWS::StackName}-message-cards
       ServiceRole: !Ref CodeBuildServiceRole
 
   # This pipeline defines the steps to build, deploy, and release the application
@@ -197,7 +255,7 @@ Resources:
         # First we have to pull the source code from the Github repository.
         - Name: Source
           Actions:
-            - Name: App
+            - Name: Fetch-source
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -213,7 +271,7 @@ Resources:
               RunOrder: 1
 
         # Now we deploy the base resources: the cluster and VPC itself.
-        - Name: BaseResources
+        - Name: Create-network
           Actions:
             - Name: Deploy
               ActionTypeId:
@@ -225,7 +283,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-BaseResources
-                TemplatePath: Source::cluster.yml
+                TemplatePath: Source::templates/cluster.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
@@ -238,10 +296,10 @@ Resources:
                 - Name: BaseResources
 
         # And we deploy the application resources (Elasticache, DynamoDB, etc)
-        - Name: ChatResources
+        - Name: Build-dependencies-and-containers
           Actions:
             # Deploy the chat resources
-            - Name: Deploy
+            - Name: Queues-roles-and-tables
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -251,7 +309,7 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-ChatResources
-                TemplatePath: Source::resources.yml
+                TemplatePath: Source::templates/resources.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
@@ -262,25 +320,40 @@ Resources:
               OutputArtifacts:
                 - Name: ChatResources
 
-            # And build the chat docker image
-            - Name: Build
+            # Build the chat frontend docker image
+            - Name: Build-chat-frontend
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CodeBuildProject
+                ProjectName: !Ref ChatFrontendBuild
               InputArtifacts:
                 - Name: Source
               OutputArtifacts:
-                - Name: BuildOutput
+                - Name: FrontendBuildOutput
+              RunOrder: 1
+
+            # Build the backend worker image
+            - Name: Build-message-cards-service
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref MessageCardsBuild
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: MessageCardsBuildOutput
               RunOrder: 1
 
         # Finally we deploy the Fargate service to the cluster
-        - Name: Deploy
+        - Name: Deploy-containers
           Actions:
-            - Name: Deploy
+            - Name: Deploy-frontend-container
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -290,18 +363,41 @@ Resources:
                 ActionMode: CREATE_UPDATE
                 RoleArn: !GetAtt CloudFormationDeployRole.Arn
                 StackName: !Sub ${EnvironmentName}-ChatService
-                TemplatePath: Source::chat-service.yml
+                TemplatePath: Source::templates/chat-service.yml
                 Capabilities: CAPABILITY_IAM
                 ParameterOverrides: !Sub |
                   {
                     "EnvironmentName": "${EnvironmentName}",
                     "ImageUrl": {
-                      "Fn::GetParam" : ["BuildOutput", "build.json", "ImageUri"]
+                      "Fn::GetParam" : ["FrontendBuildOutput", "build.json", "ImageUri"]
                     }
                   }
               InputArtifacts:
                 - Name: Source
-                - Name: BuildOutput
+                - Name: FrontendBuildOutput
+
+            - Name: Deploy-message-card-container
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
+                StackName: !Sub ${EnvironmentName}-MessageCards
+                TemplatePath: Source::templates/message-cards-service.yml
+                Capabilities: CAPABILITY_IAM
+                ParameterOverrides: !Sub |
+                  {
+                    "EnvironmentName": "${EnvironmentName}",
+                    "ImageUrl": {
+                      "Fn::GetParam" : ["MessageCardsBuildOutput", "build.json", "ImageUri"]
+                    }
+                  }
+              InputArtifacts:
+                - Name: Source
+                - Name: MessageCardsBuildOutput
 
 Outputs:
   PipelineUrl:

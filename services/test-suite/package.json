@@ -2,7 +2,7 @@
   "name": "tests",
   "version": "0.0.0",
   "description": "The test suite for the application",
-  "author": "Grant Timmerman",
+  "author": "Nathan Peck",
   "private": true,
   "license": "BSD",
   "dependencies": {
