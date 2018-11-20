@@ -6,9 +6,6 @@ Parameters:
     Type: String
     Default: production
     Description: A name for the environment that this cloudformation will be part of.
-  CertificateArn:
-    Type: String
-    Description: ARN of the Amazon Certificate Manager SSL certificate to use for this app
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -184,19 +181,6 @@ Resources:
       LoadBalancerArn: !Ref 'PublicLoadBalancer'
       Port: 80
       Protocol: HTTP
-  PublicLoadBalancerListenerHTTPS:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn:
-      - PublicLoadBalancer
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref 'DummyTargetGroupPublic'
-          Type: 'forward'
-      LoadBalancerArn: !Ref 'PublicLoadBalancer'
-      Port: 443
-      Protocol: HTTPS
-      Certificates:
-        - CertificateArn: !Ref 'CertificateArn'
 
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the
@@ -324,11 +308,6 @@ Outputs:
     Value: !Ref PublicLoadBalancerListenerHTTP
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicListenerHTTP' ] ]
-  HTTPSListener:
-    Description: The ARN of the public load balancer's HTTPS Listener
-    Value: !Ref PublicLoadBalancerListenerHTTPS
-    Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicListenerHTTPS' ] ]
   VPCId:
     Description: The ID of the VPC that this stack is deployed in
     Value: !Ref 'VPC'
