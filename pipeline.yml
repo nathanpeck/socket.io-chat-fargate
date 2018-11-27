@@ -1,8 +1,10 @@
 Parameters:
   GitHubRepo:
     Type: String
+    Default: socket.io-chat-fargate
   GitHubBranch:
     Type: String
+    Default: master
   GitHubToken:
     Type: String
     NoEcho: true
@@ -10,9 +12,10 @@ Parameters:
     Type: String
   EnvironmentName:
     Type: String
+    Default: fargate-chat
 
 Resources:
-  # Create the ECR respository to hold built docker images
+  # Create the ECR repository to hold built docker images
   Repository:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
