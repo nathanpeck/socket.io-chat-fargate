@@ -86,6 +86,8 @@ Resources:
               Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
+            - Name: LOCAL
+              Value: false
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
           LogConfiguration:
@@ -102,7 +104,6 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - HTTPRule
-      - HTTPSRule
     Properties:
       ServiceName: !Ref 'ServiceName'
       Cluster:
@@ -141,7 +142,7 @@ Resources:
       HealthCheckIntervalSeconds: 6
       HealthCheckPath: /
       Matcher:
-        HttpCode: 301
+        HttpCode: 200
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -159,9 +160,8 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
 
-  # Create rules to forward both HTTP and HTTPS traffic to the service's
-  # target group. The service itself will handle redirecting HTTP traffic
-  # to HTTPS
+  # Create rules to forward HTTP traffic to the service's
+  # target group.
   HTTPRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -174,19 +174,6 @@ Resources:
       ListenerArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTP']]
-      Priority: !Ref 'Priority'
-  HTTPSRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'TargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values: [!Ref 'Path']
-      ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
       Priority: !Ref 'Priority'
 
   # Enable autoscaling for this service

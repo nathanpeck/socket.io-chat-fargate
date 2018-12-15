@@ -129,7 +129,7 @@ io.on('connection', function(socket) {
       },
       {
         id: 'eks',
-        name: 'AWS EKS',
+        name: 'Amazon EKS',
         preview: 'AWS managed Kubernetes masters',
         image: '/images/eks.png',
         status: 'none',
@@ -137,7 +137,7 @@ io.on('connection', function(socket) {
       },
       {
         id: 'ecs',
-        name: 'AWS ECS',
+        name: 'Amazon ECS',
         preview: 'AWS container orchestrator',
         image: '/images/ecs.png',
         status: 'none',
