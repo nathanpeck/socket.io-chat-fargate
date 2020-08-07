@@ -1,29 +1,41 @@
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<script src="/vue.min.js"></script>
-<script src="/vue-virtual-scroll.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.slim.js"></script>
-<!------ Include the above in your HEAD tag ---------->
-
 <!DOCTYPE html>
-<html class=''>
-<head>
-<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+<html>
+  <head>
+    <title>Demo Chat</title>
+  </head>
+  <body>
+    <h1>Demo Chat App</h1>
 
-<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'><link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
-<link rel='stylesheet prefetch' href='/style.css'>
-<link rel="icon" href="/favicon.ico" />
-<title>Fargate Chat</title>
-</head><body>
+    <label for="name">Name:</label>
+    <input type="text" id="name" />
+    <button id="say_hello">Say Hello!</button>
 
-<div id="frame">
-  <div id='sidepanel'>
-    <rooms></rooms>
-  </div>
-  <div id="content" class="content">
-    <room-details></room-details>
-    <messages></messages>
-    <component :is="state.belowMessagesView"></component>
-  </div>
-</div>
-<script src="/main.js"></script>
-</body></html>
+    <label for="room">Room:</label>
+    <input type="text" id="room" />
+    <button id="join_room">Join Room</button>
+
+    <ul id="messages"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io({ transports: ["websocket"], upgrade: false });
+
+      document.getElementById("join_room").addEventListener("click", (e) => {
+        socket.emit("room-join", document.getElementById("room").value);
+      });
+
+      document.getElementById("say_hello").addEventListener("click", (e) => {
+        socket.emit("event", {
+          name: document.getElementById("name").value,
+          room: document.getElementById("room").value,
+        });
+      });
+
+      socket.on("event", (message) => {
+        const li = document.createElement("li");
+        li.innerHTML = message;
+        document.getElementById("messages").append(li);
+      });
+    </script>
+  </body>
+</html>
