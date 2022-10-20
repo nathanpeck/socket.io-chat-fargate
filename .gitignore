@@ -1,3 +1,4 @@
 node_modules
 .DS_Store
 npm-debug.log
+my-dynamodb-data/shared-local-instance.db

@@ -15,9 +15,15 @@ services:
   dynamodb-local:
     networks:
       - chat
-    build: ./deps/dynamodb-local
+    image:  amazon/dynamodb-local
+    container_name: dynamodb-local
+    hostname: dynamodb-local
+    restart: always
+    volumes:
+      -  ./my-dynamodb-data:/home/dynamodblocal/data
     ports:
       - 8000:8000
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data/"
 
   # Ephemeral container used for creating the tables in DynamoDB
   dynamodb-tables:
