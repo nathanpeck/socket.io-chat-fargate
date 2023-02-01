@@ -17,6 +17,10 @@ describe('The application server', function() {
   it('should have a socket.io server', async function() {
     var socket = socketClient(config.SELF_URL);
 
+    socket.on('connect_error', function (e) {
+      throw e
+    });
+
     await new Promise(function(resolve) {
       socket.on('connect', resolve);
     });

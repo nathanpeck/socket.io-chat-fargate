@@ -15,7 +15,8 @@ services:
   dynamodb-local:
     networks:
       - chat
-    build: ./deps/dynamodb-local
+    command: "-jar DynamoDBLocal.jar -inMemory -sharedDb -delayTransientStatuses 0"
+    image: public.ecr.aws/aws-dynamodb-local/aws-dynamodb-local:1.19.0
     ports:
       - 8000:8000
 

@@ -1,6 +1,6 @@
 // Entrypoint
-var server = require('./server');
-var config = require('./lib/config');
+import { server } from './server.js';
+import * as config from './lib/config.js';
 
 server.listen(config.PORT, function() {
   console.log('Server listening at port %d', config.PORT);

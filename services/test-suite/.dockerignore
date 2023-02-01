@@ -1,4 +1,3 @@
-node_modules
 Dockerfile
 package-lock.json
-tests
+node_modules

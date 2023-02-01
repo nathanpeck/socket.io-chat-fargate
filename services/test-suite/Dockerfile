@@ -1,9 +1,9 @@
-FROM node:9 AS build
+FROM node:18 AS build
 WORKDIR /srv
 ADD package.json .
 RUN npm install
 
-FROM node:9-slim
+FROM node:18-slim
 COPY --from=build /srv .
 ADD . .
 EXPOSE 3000

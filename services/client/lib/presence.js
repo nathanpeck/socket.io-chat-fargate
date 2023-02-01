@@ -1,5 +1,5 @@
-var redis = require('redis');
 var config = require('./config');
+import { redis } from './lib/redis.js';
 
 function Presence() {
   this.client = redis.createClient({
@@ -14,19 +14,12 @@ module.exports = new Presence();
   * @param {string} connectionId - The ID of the connection
   * @param {object} meta - Any metadata about the connection
 **/
-Presence.prototype.upsert = function(connectionId, meta) {
-  this.client.hset(
-    'presence',
-    connectionId,
+Presence.prototype.upsert = async function(connectionId, meta) {
+  await this.client.hSet('presence', connectionId,
     JSON.stringify({
       meta: meta,
       when: Date.now()
-    }),
-    function(err) {
-      if (err) {
-        console.error('Failed to store presence in redis: ' + err);
-      }
-    }
+    })
   );
 };
 
@@ -36,16 +29,8 @@ Presence.prototype.upsert = function(connectionId, meta) {
   * @param {string} connectionId - The ID of the connection
   * @param {object} meta - Any metadata about the connection
 **/
-Presence.prototype.remove = function(connectionId) {
-  this.client.hdel(
-    'presence',
-    connectionId,
-    function(err) {
-      if (err) {
-        console.error('Failed to remove presence in redis: ' + err);
-      }
-    }
-  );
+Presence.prototype.remove = async function(connectionId) {
+  await this.client.hDel('presence', connectionId);
 };
 
 /**
@@ -53,35 +38,30 @@ Presence.prototype.remove = function(connectionId) {
   *
   * @param {function} returnPresent - callback to return the present users
 **/
-Presence.prototype.list = function(returnPresent) {
+Presence.prototype.list = async function(returnPresent) {
   var active = [];
   var dead = [];
   var now = Date.now();
   var self = this;
 
-  this.client.hgetall('presence', function(err, presence) {
-    if (err) {
-      console.error('Failed to get presence from Redis: ' + err);
-      return returnPresent([]);
+  const presence = await this.client.hGetAll('presence');
+
+  for (var connection in presence) {
+    var details = JSON.parse(presence[connection]);
+    details.connection = connection;
+
+    if (now - details.when > 8000) {
+      dead.push(details);
+    } else {
+      active.push(details);
     }
+  }
 
-    for (var connection in presence) {
-      var details = JSON.parse(presence[connection]);
-      details.connection = connection;
+  if (dead.length) {
+    self._clean(dead);
+  }
 
-      if (now - details.when > 8000) {
-        dead.push(details);
-      } else {
-        active.push(details);
-      }
-    }
-
-    if (dead.length) {
-      self._clean(dead);
-    }
-
-    return returnPresent(active);
-  });
+  return returnPresent(active);
 };
 
 /**

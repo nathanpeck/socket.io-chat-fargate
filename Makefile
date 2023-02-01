@@ -6,7 +6,5 @@ build:
 	docker-compose up --no-deps -d client
 
 test:
-	docker-compose build client
-	docker-compose build test
-	docker-compose run --no-deps -d client
+	docker compose up -d --build --remove-orphans --scale test=0
 	docker-compose run --no-deps test

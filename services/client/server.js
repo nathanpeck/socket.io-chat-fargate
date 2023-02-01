@@ -18,30 +18,39 @@ if (!process.env.LOCAL) {
 }
 
 var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-var redis = require('socket.io-redis');
-io.adapter(redis({ host: config.REDIS_ENDPOINT, port: 6379 }));
+
+// Lower heartbeat timeout helps us expire disconnected people faster
+var io = require('socket.io')(server, {
+  pingInterval: config.HEARTBEAT_INTERVAL,
+  pingTimeout: config.HEARTBEAT_TIMEOUT
+});
+
+const { createClient } = require("redis");
+const { createAdapter } = require("@socket.io/redis-adapter");
+
+const pubClient = createClient({ url: "redis://localhost:6379" });
+const subClient = pubClient.duplicate();
+
+io.adapter(createAdapter(pubClient, subClient));
 
 var Presence = require('./lib/presence');
 var User = require('./lib/user');
 var Message = require('./lib/message');
 
-// Lower the heartbeat timeout (helps us expire disconnected people faster)
-io.set('heartbeat timeout', config.HEARTBEAT_TIMEOUT);
-io.set('heartbeat interval', config.HEARTBEAT_INTERVAL);
-
 // Routing
 app.use(express.static(path.join(__dirname, 'public')));
 
-io.on('connection', function(socket) {
+io.on('connection', async function (socket) {
+  console.log('new connection opened')
+
   // Initially the socket starts out as not authenticated
   socket.authenticated = false;
 
-  Presence.list(function(users) {
-    // Tell the socket how many users are present.
-    io.to(socket.id).emit('presence', {
-      numUsers: users.length
-    });
+  const users = await Presence.list();
+
+  // Tell the socket how many users are present.
+  io.to(socket.id).emit('presence', {
+    numUsers: users.length
   });
 
   // when the client emits 'new message', this listens and executes
