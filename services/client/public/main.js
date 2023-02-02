@@ -185,6 +185,26 @@ const store = {
   }
 }
 
+Vue.component('search', {
+  template: `<div class='search'>
+    <input type="text" class="searchTerm" placeholder="Search">
+      <button type="submit" class="searchButton">
+        <i class="fa fa-search"></i>
+     </button>
+  </div>`,
+  data: function () {
+    return store.data
+  },
+  methods: {
+    switchRoom: function (roomId) {
+      store.switchRoom(roomId)
+    }
+  },
+  updated: function () {
+    console.log('updated rooms')
+  }
+})
+
 Vue.component('rooms', {
   template: `<div class='rooms'><ul>
     <li class="room" v-on:click="switchRoom(room.id)" :class="{ active: room.id==state.activeRoom }" v-for='room in rooms'>
