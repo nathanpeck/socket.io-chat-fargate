@@ -45,6 +45,9 @@ services:
       ENV_NAME: test
       REDIS_ENDPOINT: redis://redis:6379
       DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      USER_TABLE: test_Users
+      MESSAGE_TABLE: test_Messages
+      AWS_REGION: test
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
     ports:

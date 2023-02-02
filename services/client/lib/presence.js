@@ -28,9 +28,8 @@ export const remove = async function (connectionId) {
 /**
   * Returns a list of present users, minus any expired
   *
-  * @param {function} returnPresent - callback to return the present users
 **/
-export const list = async function (returnPresent) {
+export const list = async function () {
   const active = []
   const dead = []
   const now = Date.now()
@@ -52,13 +51,13 @@ export const list = async function (returnPresent) {
     clean(dead)
   }
 
-  return returnPresent(active)
+  return active
 }
 
 /**
   * Cleans a list of connections by removing expired ones
   *
-  * @param
+  * @param {array} toDelete - A list of expired presences to remove
 **/
 const clean = function (toDelete) {
   console.log(`Cleaning ${toDelete.length} expired presences`)

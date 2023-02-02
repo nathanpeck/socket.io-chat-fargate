@@ -15,8 +15,6 @@ describe('The application server', function () {
   })
 
   it('should have a socket.io server', async function () {
-
-    console.log(config.SELF_URL)
     const socket = socketClient(config.WS_URL)
 
     socket.on('connect_error', function (e) {

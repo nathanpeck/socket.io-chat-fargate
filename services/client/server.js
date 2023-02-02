@@ -4,7 +4,7 @@ import crypto from 'crypto'
 import express from 'express'
 import compression from 'compression'
 import enforce from 'express-sslify'
-import * as config from './lib/config.js'
+import config from './lib/config.js'
 import http from 'http'
 import { Server } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -36,12 +36,13 @@ const io = new Server(server, {
 // Setup socket.io to scale horizontally using Redis pubsub
 const pubClient = client.duplicate()
 const subClient = client.duplicate()
+await pubClient.connect()
+await subClient.connect()
+
 io.adapter(createAdapter(pubClient, subClient))
 
 // Handler for socket.io connections
 io.on('connection', async function (socket) {
-  console.log('new connection opened')
-
   // Initially the socket starts out as not authenticated
   socket.authenticated = false
 
@@ -202,17 +203,17 @@ io.on('connection', async function (socket) {
     })
     socket.present = true
 
-    Presence.list(function (users) {
-      socket.emit('login', {
-        numUsers: users.length
-      })
+    const users = await Presence.list()
 
-      // echo globally (all clients) that a person has connected
-      io.emit('user joined', {
-        username: socket.username,
-        avatar: socket.avatar,
-        numUsers: users.length
-      })
+    socket.emit('login', {
+      numUsers: users.length
+    })
+
+    // echo globally (all clients) that a person has connected
+    io.emit('user joined', {
+      username: socket.username,
+      avatar: socket.avatar,
+      numUsers: users.length
     })
 
     return callback(null, {
@@ -269,17 +270,17 @@ io.on('connection', async function (socket) {
     })
     socket.present = true
 
-    Presence.list(function (users) {
-      socket.emit('login', {
-        numUsers: users.length
-      })
+    const users = await Presence.list()
 
-      // echo globally (all clients) that a person has connected
-      io.emit('user joined', {
-        username: socket.username,
-        avatar: socket.avatar,
-        numUsers: users.length
-      })
+    socket.emit('login', {
+      numUsers: users.length
+    })
+
+    // echo globally (all clients) that a person has connected
+    io.emit('user joined', {
+      username: socket.username,
+      avatar: socket.avatar,
+      numUsers: users.length
     })
 
     return callback(null, {
@@ -288,7 +289,7 @@ io.on('connection', async function (socket) {
     })
   })
 
-  socket.on('anonymous user', function (callback) {
+  socket.on('anonymous user', async function (callback) {
     if (!_.isFunction(callback)) {
       return
     }
@@ -303,17 +304,17 @@ io.on('connection', async function (socket) {
     })
     socket.present = true
 
-    Presence.list(function (users) {
-      socket.emit('login', {
-        numUsers: users.length
-      })
+    const users = await Presence.list()
 
-      // echo globally (all clients) that a person has connected
-      io.emit('user joined', {
-        username: socket.username,
-        avatar: socket.avatar,
-        numUsers: users.length
-      })
+    socket.emit('login', {
+      numUsers: users.length
+    })
+
+    // echo globally (all clients) that a person has connected
+    io.emit('user joined', {
+      username: socket.username,
+      avatar: socket.avatar,
+      numUsers: users.length
     })
 
     return callback(null, {
@@ -348,17 +349,17 @@ io.on('connection', async function (socket) {
   })
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', function () {
+  socket.on('disconnect', async function () {
     if (socket.authenticated) {
       Presence.remove(socket.id)
 
-      Presence.list(function (users) {
-        // echo globally (all clients) that a person has left
-        socket.broadcast.emit('user left', {
-          username: socket.username,
-          avatar: socket.avatar,
-          numUsers: users.length
-        })
+      const users = await Presence.list()
+
+      // echo globally (all clients) that a person has left
+      socket.broadcast.emit('user left', {
+        username: socket.username,
+        avatar: socket.avatar,
+        numUsers: users.length
       })
     }
   })
