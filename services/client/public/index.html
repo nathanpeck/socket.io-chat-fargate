@@ -1,29 +1,38 @@
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="/vue.min.js"></script>
 <script src="/vue-virtual-scroll.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.slim.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
+  integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI" crossorigin="anonymous"></script>
 <!------ Include the above in your HEAD tag ---------->
 
 <!DOCTYPE html>
 <html class=''>
+
 <head>
-<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
 
-<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'><link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
-<link rel='stylesheet prefetch' href='/style.css'>
-<link rel="icon" href="/favicon.ico" />
-<title>Fargate Chat</title>
-</head><body>
+  <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
+  <link rel='stylesheet prefetch'
+    href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+  <link rel='stylesheet prefetch' href='/style.css'>
+  <link rel="icon" href="/favicon.ico" />
+  <title>Fargate Chat</title>
+</head>
 
-<div id="frame">
-  <div id='sidepanel'>
-    <rooms></rooms>
+<body>
+
+  <div id="frame">
+    <div id='sidepanel'>
+      <rooms></rooms>
+    </div>
+    <div id="content" class="content">
+      <room-details></room-details>
+      <messages></messages>
+      <component :is="state.belowMessagesView"></component>
+    </div>
   </div>
-  <div id="content" class="content">
-    <room-details></room-details>
-    <messages></messages>
-    <component :is="state.belowMessagesView"></component>
-  </div>
-</div>
-<script src="/main.js"></script>
-</body></html>
+  <script src="/main.js"></script>
+</body>
+
+</html>
