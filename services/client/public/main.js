@@ -1,8 +1,8 @@
-var socket = io();
+const socket = io()
 
-Vue.component('virtual-list', VirtualScrollList);
+Vue.component('virtual-list', VirtualScrollList)
 
-var store = {
+const store = {
   data: {
     state: {
       username: null,
@@ -20,7 +20,7 @@ var store = {
     messages: {
       general: [],
       ecs: [],
-      eks: [],
+      lambda: [],
       fargate: []
     },
 
@@ -32,125 +32,125 @@ var store = {
   },
 
   // Mutate the data store to add a message
-  liveMessage: function(message) {
-    this.insertMessage(message);
+  liveMessage: function (message) {
+    this.insertMessage(message)
 
     if (message.room !== this.data.state.activeRoom) {
       // Message arrive in another room, so need to trigger the dot on that room
-      var arrivedRoom = this.data.rooms.find(function(room) {
-        return room.id === message.room;
-      });
+      const arrivedRoom = this.data.rooms.find(function (room) {
+        return room.id === message.room
+      })
 
-      arrivedRoom.status = 'unread';
+      arrivedRoom.status = 'unread'
     }
   },
 
-  insertMessage: function(message) {
-    var inserted = false;
+  insertMessage: function (message) {
+    let inserted = false
 
-    var messageCount = this.data.messages[message.room].length;
+    const messageCount = this.data.messages[message.room].length
 
     if (messageCount === 0) {
       // Insert into empty store.
-      this.data.messages[message.room].push(message);
-      return;
+      this.data.messages[message.room].push(message)
+      return
     }
 
     if (messageCount === 1) {
       // Insert second message
       if (message.time > this.data.messages[message.room][0].time) {
-        this.data.messages[message.room].push(message);
-        return;
+        this.data.messages[message.room].push(message)
+        return
       } else {
-        this.data.messages[message.room].unshift(message);
-        return;
+        this.data.messages[message.room].unshift(message)
+        return
       }
     }
 
-    var last = this.data.messages[message.room][messageCount - 1];
+    const last = this.data.messages[message.room][messageCount - 1]
 
     if (last.time < message.time) {
       // Optimize adding new latest message
-      this.data.messages[message.room].push(message);
-      return;
+      this.data.messages[message.room].push(message)
+      return
     }
 
-    var first = this.data.messages[message.room][0];
+    const first = this.data.messages[message.room][0]
     if (first.time > message.time) {
       // Optimize adding new oldest message
-      this.data.messages[message.room].unshift(message);
-      return;
+      this.data.messages[message.room].unshift(message)
+      return
     }
 
     // Fallthrough for insert in the middle of the set.
-    console.log('middle insert?');
-    for (var i = 0; i < this.data.messages[message.room].length - 1; i++) {
+    console.log('middle insert?')
+    for (let i = 0; i < this.data.messages[message.room].length - 1; i++) {
       if (this.data.messages[message.room][i].time >= message.time &&
           this.data.messages[message.room][i + 1].time <= message.time) {
-        this.data.messages[message.room].splice(i, 0, message);
-        inserted = true;
-        break;
+        this.data.messages[message.room].splice(i, 0, message)
+        inserted = true
+        break
       }
     }
 
     if (!inserted) {
-      this.data.messages[message.room].unshift(message);
+      this.data.messages[message.room].unshift(message)
     }
   },
 
   // Mutate the data store to switch the active room
-  switchRoom: function(roomId) {
-    this.data.state.activeRoom = roomId;
+  switchRoom: function (roomId) {
+    this.data.state.activeRoom = roomId
 
-    this.data.activeRoom = this.data.rooms.find(function(room) {
-      return room.id === roomId;
-    });
+    this.data.activeRoom = this.data.rooms.find(function (room) {
+      return room.id === roomId
+    })
 
-    this.data.activeRoom.status = 'none'; // Clear unread indicator
+    this.data.activeRoom.status = 'none' // Clear unread indicator
 
-    this.data.activeMessages = this.data.messages[roomId];
+    this.data.activeMessages = this.data.messages[roomId]
   },
 
   // Helper function that runs on a schedule and expires any typers that
   // have not emitted a typing event recently.
   _expireTypersInterval: null,
-  _expireTypers: function() {
-    var now = Date.now();
+  _expireTypers: function () {
+    const now = Date.now()
 
-    for (var i = 0; i < this.data.typing.length; i++) {
+    for (let i = 0; i < this.data.typing.length; i++) {
       if (this.data.typing[i].until < now) {
-        this.data.typing.splice(i, 1);
+        this.data.typing.splice(i, 1)
       }
     }
 
     if (this.data.typing.length === 0) {
       // No typers left so stop checking for then.
-      clearInterval(this._expireTypersInterval);
-      this._expireTypersInterval = null;
+      clearInterval(this._expireTypersInterval)
+      this._expireTypersInterval = null
     }
   },
 
   // Mutate the data store to add a typing user.
-  addTyper: function(typer) {
+  addTyper: function (typer) {
     // Add an expiration.
-    typer.until = Date.now() + 3000;
+    typer.until = Date.now() + 3000
 
     // Prevent dupes and the splice + push method triggers Vue update.
-    this.removeTyper(typer);
-    this.data.typing.push(typer);
+    this.removeTyper(typer)
+    this.data.typing.push(typer)
 
     if (!this._expireTypersInterval) {
       // Now that we have typers, start checking every 500ms to see if we need to expire one or more.
-      this._expireTypersInterval = setInterval(this._expireTypers.bind(this), 500);
+      this._expireTypersInterval = setInterval(this._expireTypers.bind(this), 500)
     }
   },
 
-  removeTyper: function(typer) {
-    for (var i = 0; i < this.data.typing.length; i++) {
+  removeTyper: function (typer) {
+    for (let i = 0; i < this.data.typing.length; i++) {
       if (this.data.typing[i].username === typer.username &&
           this.data.typing[i].room === typer.room) {
-        this.data.typing.splice(i, 1);
-        break;
+        this.data.typing.splice(i, 1)
+        break
       }
     }
   },
@@ -158,32 +158,32 @@ var store = {
   // Helper function that runs on a schedule and expires any typers that
   // have not emitted a typing event recently.
   _expireEventsInterval: null,
-  _expireEvents: function() {
-    var now = Date.now();
+  _expireEvents: function () {
+    const now = Date.now()
 
-    for (var i = 0; i < this.data.events.length; i++) {
+    for (let i = 0; i < this.data.events.length; i++) {
       if (this.data.events[i].until < now) {
-        this.data.events.splice(i, 1);
+        this.data.events.splice(i, 1)
       }
     }
 
     if (this.data.events.length === 0) {
       // No typers left so stop checking for then.
-      clearInterval(this._expireEventsInterval);
-      this._expireEventsInterval = null;
+      clearInterval(this._expireEventsInterval)
+      this._expireEventsInterval = null
     }
   },
 
-  addEvent: function(event) {
-    event.until = Date.now() + 3000;
-    this.data.events.push(event);
+  addEvent: function (event) {
+    event.until = Date.now() + 3000
+    this.data.events.push(event)
 
     if (!this._expireEventsInterval) {
       // Now that we have events, start checking every 500ms to see if we need to expire one or more.
-      this._expireEventsInterval = setInterval(this._expireEvents.bind(this), 500);
+      this._expireEventsInterval = setInterval(this._expireEvents.bind(this), 500)
     }
   }
-};
+}
 
 Vue.component('rooms', {
   template: `<div class='rooms'><ul>
@@ -198,18 +198,18 @@ Vue.component('rooms', {
       </div>
     </li>
   </ul></div>`,
-  data: function() {
-    return store.data;
+  data: function () {
+    return store.data
   },
   methods: {
-    switchRoom: function(roomId) {
-      store.switchRoom(roomId);
+    switchRoom: function (roomId) {
+      store.switchRoom(roomId)
     }
   },
-  updated: function() {
-    console.log('updated rooms');
+  updated: function () {
+    console.log('updated rooms')
   }
-});
+})
 
 Vue.component('room-details', {
   template: `<div class="room-details">
@@ -226,13 +226,13 @@ Vue.component('room-details', {
       </transition>
     </div>
   </div>`,
-  data: function() {
-    return store.data;
+  data: function () {
+    return store.data
   },
-  updated: function() {
-    console.log('updated room details');
+  updated: function () {
+    console.log('updated room details')
   }
-});
+})
 
 Vue.component('messages', {
   template: `
@@ -254,100 +254,100 @@ Vue.component('messages', {
       </virtual-list>
     </div>
   `,
-  data: function() {
+  data: function () {
     return {
       scrolled: false,
       loading: false,
       state: store.data.state,
       messages: store.data.messages,
       typing: store.data.typing
-    };
+    }
   },
   computed: {
-    currentRoomTypers: function() {
-      var currentRoom = this.state.activeRoom;
-      return this.typing.filter(function(typer) {
-        return typer.room === currentRoom;
-      });
+    currentRoomTypers: function () {
+      const currentRoom = this.state.activeRoom
+      return this.typing.filter(function (typer) {
+        return typer.room === currentRoom
+      })
     },
 
-    activeMessages: function() {
-      return this.messages[this.state.activeRoom];
+    activeMessages: function () {
+      return this.messages[this.state.activeRoom]
     }
   },
   watch: {
-    'state.activeRoom': function() {
-      this.loadMore();
-      this.scrolled = false;
+    'state.activeRoom': function () {
+      this.loadMore()
+      this.scrolled = false
     }
   },
   methods: {
-    loadMore: function() {
+    loadMore: function () {
       if (this.loading) {
-        return true;
+        return true
       }
 
-      console.log('loading older messages');
+      console.log('loading older messages')
 
-      var self = this;
+      const self = this
 
-      this.loading = true;
+      this.loading = true
 
       if (!this.state.activeRoom) {
-        return;
+        return
       }
 
-      var from = { room: this.state.activeRoom };
+      const from = { room: this.state.activeRoom }
 
       if (this.messages[this.state.activeRoom].length) {
-        from.message = this.messages[this.state.activeRoom][0].message;
+        from.message = this.messages[this.state.activeRoom][0].message
       }
 
-      var messageList = this.$el.querySelector('.list');
-      this.oldHeight = messageList.scrollHeight;
+      const messageList = this.$el.querySelector('.list')
+      this.oldHeight = messageList.scrollHeight
 
       socket.emit(
         'message list',
         from,
-        function(err, response) {
-          for (var message of response.messages) {
-            store.insertMessage(message);
+        function (err, response) {
+          for (const message of response.messages) {
+            store.insertMessage(message)
           }
 
-          self.loading = false;
+          self.loading = false
         }
-      );
+      )
     },
 
-    scroll: function() {
-      var messageList = this.$el.querySelector('.list');
+    scroll: function () {
+      const messageList = this.$el.querySelector('.list')
 
       if (messageList.scrollTop + messageList.clientHeight === messageList.scrollHeight) {
-        this.scrolled = false;
+        this.scrolled = false
       } else {
-        this.scrolled = true;
+        this.scrolled = true
       }
     }
   },
 
-  updated: function() {
-    var messageList = this.$el.querySelector('.list');
+  updated: function () {
+    const messageList = this.$el.querySelector('.list')
 
     if (!this.scrolled) {
       // If the user hasn't manually scrolled up then automatically scroll to bottom
-      messageList.scrollTop = messageList.scrollHeight;
+      messageList.scrollTop = messageList.scrollHeight
     } else {
       // When we load more content in while scrolled up leave the scroll position in the same
       // place so that the content doesn't move.
-      messageList.scrollTop = messageList.scrollHeight - this.oldHeight;
+      messageList.scrollTop = messageList.scrollHeight - this.oldHeight
     }
   },
 
-  mounted: function() {
-    this.loadMore();
-    this.scrolled = false;
+  mounted: function () {
+    this.loadMore()
+    this.scrolled = false
   }
-});
+})
 
 Vue.component('message-input', {
   template: `<div class="message-input">
@@ -356,47 +356,47 @@ Vue.component('message-input', {
     <button class="submit" v-on:click="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
     </div>
   </div>`,
-  data: function() {
-    return store.data;
+  data: function () {
+    return store.data
   },
   methods: {
-    check: function() {
+    check: function () {
       if (!store.data.state.authenticated) {
         // Must hide self and show the login panel
-        store.data.state.belowMessagesView = 'login';
+        store.data.state.belowMessagesView = 'login'
       }
     },
 
-    startTyping: function(event) {
+    startTyping: function (event) {
       if (!store.data.state.authenticated || event.keyCode === 13 ||
           event.keyCode === 17 || event.keyCode === 18 || event.keyCode === 91 ||
           event.keyCode === 92) {
-        return;
+        return
       }
 
-      var now = Date.now();
+      const now = Date.now()
 
       if (store.data.state.lastTyping > now - 2000) {
         // Already shared typing status less than two second ago.
-        return;
+        return
       }
 
-      socket.emit('typing', store.data.state.activeRoom);
+      socket.emit('typing', store.data.state.activeRoom)
       store.addTyper({
         room: store.data.state.activeRoom,
         username: store.data.state.username,
         avatar: store.data.state.avatar
-      });
-      store.data.state.lastTyping = now;
+      })
+      store.data.state.lastTyping = now
     },
 
-    submit: function() {
-      var textbox = this.$el.querySelector('#textbox');
-      var text = textbox.value.trim();
-      var self = this;
+    submit: function () {
+      const textbox = this.$el.querySelector('#textbox')
+      const text = textbox.value.trim()
+      const self = this
 
       if (text === '') {
-        return;
+        return
       }
 
       socket.emit(
@@ -405,26 +405,26 @@ Vue.component('message-input', {
           room: this.state.activeRoom,
           message: text
         },
-        function(err, message) {
+        function (err, message) {
           if (err) {
-            return console.error(err);
+            return console.error(err)
           }
 
-          store.insertMessage(message);
+          store.insertMessage(message)
           store.removeTyper({
             room: self.state.activeRoom,
             username: self.state.username
-          });
-          store.data.state.lastTyping = 0;
+          })
+          store.data.state.lastTyping = 0
         }
-      );
+      )
 
-      socket.emit('stop typing', this.state.activeRoom);
+      socket.emit('stop typing', this.state.activeRoom)
 
-      textbox.value = '';
+      textbox.value = ''
     }
   }
-});
+})
 
 Vue.component('login', {
   template: `<div class='message-input-form'>
@@ -447,58 +447,58 @@ Vue.component('login', {
     </div>
   </div>`,
   methods: {
-    anonymous: function() {
-      socket.emit('anonymous user', function(err, response) {
-        store.data.state.username = response.username;
-        store.data.state.avatar = response.avatar;
-        store.data.state.authenticated = true;
-        store.data.state.belowMessagesView = 'message-input';
-        console.log('logged in');
-      });
+    anonymous: function () {
+      socket.emit('anonymous user', function (err, response) {
+        store.data.state.username = response.username
+        store.data.state.avatar = response.avatar
+        store.data.state.authenticated = true
+        store.data.state.belowMessagesView = 'message-input'
+        console.log('logged in')
+      })
     },
 
-    createAccount: function() {
-      store.data.state.belowMessagesView = 'create-account';
+    createAccount: function () {
+      store.data.state.belowMessagesView = 'create-account'
     },
 
-    submit: function() {
-      console.log('submit login');
-      var self = this;
+    submit: function () {
+      console.log('submit login')
+      const self = this
 
-      var $username = this.$el.querySelector('.username');
-      var username = $username.value.trim();
+      const $username = this.$el.querySelector('.username')
+      const username = $username.value.trim()
 
-      var $password = this.$el.querySelector('.password');
-      var password = $password.value.trim();
+      const $password = this.$el.querySelector('.password')
+      const password = $password.value.trim()
 
       socket.emit(
         'authenticate user',
         {
-          username: username,
-          password: password
+          username,
+          password
         },
-        function(err, response) {
+        function (err, response) {
           if (err) {
-            console.error(err);
+            console.error(err)
 
             if (err === 'No matching account found') {
-              self.error = 'no-match';
+              self.error = 'no-match'
             }
 
-            return;
+            return
           }
 
-          store.data.state.username = response.username;
-          store.data.state.avatar = response.avatar;
-          store.data.state.authenticated = true;
-          store.data.state.belowMessagesView = 'message-input';
+          store.data.state.username = response.username
+          store.data.state.avatar = response.avatar
+          store.data.state.authenticated = true
+          store.data.state.belowMessagesView = 'message-input'
 
-          console.log('logged in');
+          console.log('logged in')
         }
-      );
+      )
     }
   }
-});
+})
 
 Vue.component('create-account', {
   template: `<div class='message-input-form'>
@@ -532,121 +532,121 @@ Vue.component('create-account', {
       </form>
     </div>
   </div>`,
-  data: function() {
+  data: function () {
     return {
       error: 'none'
-    };
+    }
   },
   methods: {
-    anonymous: function() {
-      socket.emit('anonymous user', function(err, response) {
-        store.data.state.username = response.username;
-        store.data.state.avatar = response.avatar;
-        store.data.state.authenticated = true;
-        store.data.state.belowMessagesView = 'message-input';
-        console.log('logged in');
-      });
+    anonymous: function () {
+      socket.emit('anonymous user', function (err, response) {
+        store.data.state.username = response.username
+        store.data.state.avatar = response.avatar
+        store.data.state.authenticated = true
+        store.data.state.belowMessagesView = 'message-input'
+        console.log('logged in')
+      })
     },
 
-    login: function() {
-      store.data.state.belowMessagesView = 'login';
+    login: function () {
+      store.data.state.belowMessagesView = 'login'
     },
 
-    submit: function() {
-      console.log('submit create account');
-      var self = this;
+    submit: function () {
+      console.log('submit create account')
+      const self = this
 
-      var $username = this.$el.querySelector('.username');
-      var username = $username.value.trim();
+      const $username = this.$el.querySelector('.username')
+      const username = $username.value.trim()
 
-      var $password = this.$el.querySelector('.password');
-      var password = $password.value.trim();
+      const $password = this.$el.querySelector('.password')
+      const password = $password.value.trim()
 
-      var $email = this.$el.querySelector('.email');
-      var email = $email.value.trim();
+      const $email = this.$el.querySelector('.email')
+      const email = $email.value.trim()
 
       socket.emit(
         'create user',
         {
-          username: username,
-          email: email,
-          password: password
+          username,
+          email,
+          password
         },
-        function(err, response) {
+        function (err, response) {
           if (err) {
-            console.error(err);
+            console.error(err)
 
             if (err === 'That username is taken already.') {
-              self.error = 'username';
+              self.error = 'username'
             }
 
-            return;
+            return
           }
 
-          store.data.state.username = response.username;
-          store.data.state.avatar = response.avatar;
-          store.data.state.authenticated = true;
-          store.data.state.belowMessagesView = 'message-input';
-          console.log('logged in');
+          store.data.state.username = response.username
+          store.data.state.avatar = response.avatar
+          store.data.state.authenticated = true
+          store.data.state.belowMessagesView = 'message-input'
+          console.log('logged in')
         }
-      );
+      )
     }
   }
-});
+})
 
 new Vue({
   el: '#frame',
   data: store.data
-});
+})
 
 // Listen for new messages from the server, and add them to the local store.
-socket.on('new message', function(message) {
-  store.liveMessage(message);
-});
+socket.on('new message', function (message) {
+  store.liveMessage(message)
+})
 
 // Listen for typers from the server and add to the local store
-socket.on('typing', function(typer) {
-  store.addTyper(typer);
-});
+socket.on('typing', function (typer) {
+  store.addTyper(typer)
+})
 
 // Listen for typers from the server and add to the local store
-socket.on('stop typing', function(typer) {
-  store.removeTyper(typer);
-});
+socket.on('stop typing', function (typer) {
+  store.removeTyper(typer)
+})
 
-socket.emit('room list', function(err, rooms) {
-  store.data.rooms = store.data.rooms.concat(rooms);
-  store.switchRoom(store.data.rooms[0].id);
-});
+socket.emit('room list', function (err, rooms) {
+  store.data.rooms = store.data.rooms.concat(rooms)
+  store.switchRoom(store.data.rooms[0].id)
+})
 
-socket.on('user joined', function(joined) {
-  store.data.state.presentCount = joined.numUsers;
+socket.on('user joined', function (joined) {
+  store.data.state.presentCount = joined.numUsers
 
   store.addEvent({
     type: 'joined',
     username: joined.username,
     avatar: joined.avatar
-  });
-});
+  })
+})
 
-socket.on('user left', function(left) {
-  store.data.state.presentCount = left.numUsers;
+socket.on('user left', function (left) {
+  store.data.state.presentCount = left.numUsers
 
   store.addEvent({
     type: 'left',
     username: left.username,
     avatar: left.avatar
-  });
-});
+  })
+})
 
-socket.on('presence', function(presence) {
-  store.data.state.presentCount = presence.numUsers;
-});
+socket.on('presence', function (presence) {
+  store.data.state.presentCount = presence.numUsers
+})
 
 // Capture the enter key if not already captured by the textbox.
-document.onkeydown = function(evt) {
-  evt = evt || window.event;
+document.onkeydown = function (evt) {
+  evt = evt || window.event
   if (evt.keyCode === 13) {
-    document.getElementById('textbox').focus();
+    document.getElementById('textbox').focus()
   }
-};
+}

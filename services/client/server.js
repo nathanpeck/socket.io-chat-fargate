@@ -122,33 +122,33 @@ io.on('connection', async function (socket) {
     return callback(null, [
       {
         id: 'general',
-        name: 'General AWS',
-        preview: 'General AWS discussion',
-        image: '/images/aws.jpg',
+        name: 'Serverless is Awesome',
+        preview: 'General serverless talk',
+        image: '/images/serverless.svg',
         status: 'none',
         onlineCount: 0
       },
       {
         id: 'fargate',
         name: 'AWS Fargate',
-        preview: 'Containers without instances',
-        image: '/images/fargate.png',
+        preview: 'Serverless containers',
+        image: '/images/fargate.svg',
         status: 'none',
         onlineCount: 0
       },
       {
-        id: 'eks',
-        name: 'AWS EKS',
-        preview: 'AWS managed Kubernetes masters',
-        image: '/images/eks.png',
+        id: 'lambda',
+        name: 'AWS Lambda',
+        preview: 'Serverless functions',
+        image: '/images/lambda.svg',
         status: 'none',
         onlineCount: 0
       },
       {
         id: 'ecs',
-        name: 'AWS ECS',
-        preview: 'AWS container orchestrator',
-        image: '/images/ecs.png',
+        name: 'Amazon Elastic Container Service',
+        preview: 'Orchestrate serverless containers',
+        image: '/images/ecs.svg',
         status: 'none',
         onlineCount: 0
       }
