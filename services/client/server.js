@@ -1,122 +1,121 @@
 // Setup basic express server
-var _ = require('lodash');
-var crypto = require('crypto');
-var express = require('express');
-var compression = require('compression');
-var path = require('path');
-var enforce = require('express-sslify');
-var config = require('./lib/config');
+import _ from 'lodash'
+import crypto from 'crypto'
+import express from 'express'
+import compression from 'compression'
+import enforce from 'express-sslify'
+import * as config from './lib/config.js'
+import http from 'http'
+import { Server } from 'socket.io'
+import { createAdapter } from '@socket.io/redis-adapter'
+import * as Presence from './lib/presence.js'
+import * as User from './lib/user.js'
+import * as Message from './lib/message.js'
+import client from './lib/redis.js'
 
-var app = express();
+// Setup the HTTP server that serves static assets
+const app = express()
+export const server = http.createServer(app)
 
-// GZIP compress resources served
-app.use(compression());
+app.use(compression())
 
 // Force redirect to HTTPS if the protocol was HTTP
 if (!process.env.LOCAL) {
-  app.use(enforce.HTTPS({ trustProtoHeader: true }));
+  app.use(enforce.HTTPS({ trustProtoHeader: true }))
 }
 
-var server = require('http').createServer(app);
+// The static paths
+app.use(express.static('public'))
 
-// Lower heartbeat timeout helps us expire disconnected people faster
-var io = require('socket.io')(server, {
+// The Socket.io features on top of the HTTP server
+const io = new Server(server, {
   pingInterval: config.HEARTBEAT_INTERVAL,
   pingTimeout: config.HEARTBEAT_TIMEOUT
-});
+})
 
-const { createClient } = require("redis");
-const { createAdapter } = require("@socket.io/redis-adapter");
+// Setup socket.io to scale horizontally using Redis pubsub
+const pubClient = client.duplicate()
+const subClient = client.duplicate()
+io.adapter(createAdapter(pubClient, subClient))
 
-const pubClient = createClient({ url: "redis://localhost:6379" });
-const subClient = pubClient.duplicate();
-
-io.adapter(createAdapter(pubClient, subClient));
-
-var Presence = require('./lib/presence');
-var User = require('./lib/user');
-var Message = require('./lib/message');
-
-// Routing
-app.use(express.static(path.join(__dirname, 'public')));
-
+// Handler for socket.io connections
 io.on('connection', async function (socket) {
   console.log('new connection opened')
 
   // Initially the socket starts out as not authenticated
-  socket.authenticated = false;
+  socket.authenticated = false
 
-  const users = await Presence.list();
+  const users = await Presence.list()
 
   // Tell the socket how many users are present.
   io.to(socket.id).emit('presence', {
     numUsers: users.length
-  });
+  })
 
   // when the client emits 'new message', this listens and executes
-  socket.on('new message', async function(data, callback) {
+  socket.on('new message', async function (data, callback) {
     if (!socket.authenticated) {
       // Don't allow people not authenticated to send a message
-      return callback('Can\'t send a message until you are authenticated');
+      return callback('Can\'t send a message until you are authenticated')
     }
 
     if (!data.room || !_.isString(data.room)) {
-      return callback('Must pass a parameter `room` which is a string');
+      return callback('Must pass a parameter `room` which is a string')
     }
 
     if (!data.message || !_.isString(data.message)) {
-      return callback('Must pass a parameter `message` which is a string');
+      return callback('Must pass a parameter `message` which is a string')
     }
 
-    var messageBody = {
+    const messageBody = {
       room: data.room,
       time: Date.now(),
       content: {
-        text: data.message,
+        text: data.message
       },
       username: socket.username,
       avatar: socket.avatar
-    };
+    }
 
     // Store the messages in DynamoDB
-    messageBody.message = await Message.add(messageBody);
+    messageBody.message = await Message.add(messageBody)
 
-    socket.broadcast.emit('new message', messageBody);
+    socket.broadcast.emit('new message', messageBody)
 
-    return callback(null, messageBody);
-  });
+    return callback(null, messageBody)
+  })
 
-  socket.on('message list', async function(from, callback) {
-    var messages;
+  socket.on('message list', async function (from, callback) {
+    let messages
 
     if (!from.room || !_.isString(from.room)) {
-      return callback('Must pass a parameter `from.room` which is a string');
+      return callback('Must pass a parameter `from.room` which is a string')
     }
 
     try {
-      messages = await Message.listFromRoom(from);
+      messages = await Message.listFromRoom(from)
     } catch (e) {
-      return callback(e);
+      return callback(e)
     }
 
-    return callback(null, messages);
-  });
+    return callback(null, messages)
+  })
 
-  socket.conn.on('heartbeat', function() {
+  socket.conn.on('heartbeat', function () {
     if (!socket.authenticated) {
       // Don't start counting as present until they authenticate.
-      return;
+      return
     }
 
     Presence.upsert(socket.id, {
       username: socket.username
-    });
-  });
+    })
+  })
 
   // Client wants a list of rooms
-  socket.on('room list', function(callback) {
+  socket.on('room list', function (callback) {
     if (!_.isFunction(callback)) {
-      return;
+      return
     }
 
     return callback(null, [
@@ -152,217 +151,215 @@ io.on('connection', async function (socket) {
         status: 'none',
         onlineCount: 0
       }
-    ]);
-  });
+    ])
+  })
 
   // Client wants to create a new account
-  socket.on('create user', async function(details, callback) {
+  socket.on('create user', async function (details, callback) {
     if (!_.isFunction(callback)) {
-      return;
+      return
     }
 
     if (socket.authenticated) {
-      return callback('User already has a logged in identity');
+      return callback('User already has a logged in identity')
     }
 
     if (!details.username || !_.isString(details.username)) {
-      return callback('Must pass a parameter `username` which is a string');
+      return callback('Must pass a parameter `username` which is a string')
     }
 
     if (!details.email || !_.isString(details.email)) {
-      return callback('Must pass a parameter `email` which is a string');
+      return callback('Must pass a parameter `email` which is a string')
     }
 
     if (!details.password || !_.isString(details.password)) {
-      return callback('Must pass a parameter `password` which is a string');
+      return callback('Must pass a parameter `password` which is a string')
     }
 
-    details.password = details.password.trim().toLowerCase();
-    details.username = details.username.trim().toLowerCase();
-    details.email = details.email.trim().toLowerCase();
+    details.password = details.password.trim().toLowerCase()
+    details.username = details.username.trim().toLowerCase()
+    details.email = details.email.trim().toLowerCase()
 
     try {
       await User.create({
         username: details.username,
         email: details.email,
         password: details.password
-      });
+      })
     } catch (e) {
-      return callback(e.toString());
+      return callback(e.toString())
     }
 
     // Set details on the socket.
-    socket.authenticated = true;
-    socket.username = details.username;
-    socket.email = details.email;
-    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.email).digest('hex');
+    socket.authenticated = true
+    socket.username = details.username
+    socket.email = details.email
+    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.email).digest('hex')
 
     // Set the user as present.
     Presence.upsert(socket.id, {
       username: socket.username
-    });
-    socket.present = true;
+    })
+    socket.present = true
 
-    Presence.list(function(users) {
+    Presence.list(function (users) {
       socket.emit('login', {
         numUsers: users.length
-      });
+      })
 
       // echo globally (all clients) that a person has connected
       io.emit('user joined', {
         username: socket.username,
         avatar: socket.avatar,
         numUsers: users.length
-      });
-    });
+      })
+    })
 
     return callback(null, {
       username: socket.username,
       avatar: socket.avatar
-    });
-  });
+    })
+  })
 
   // Client wants to authenticate a user
-  socket.on('authenticate user', async function(details, callback) {
+  socket.on('authenticate user', async function (details, callback) {
     if (!_.isFunction(callback)) {
-      return;
+      return
     }
 
     if (socket.authenticated) {
-      return callback('User already has a logged in identity');
+      return callback('User already has a logged in identity')
     }
 
     if (!details.username || !_.isString(details.username)) {
-      return callback('Must pass a parameter `username` which is a string');
+      return callback('Must pass a parameter `username` which is a string')
     }
 
     if (!details.password || !_.isString(details.password)) {
-      return callback('Must pass a parameter `password` which is a string');
+      return callback('Must pass a parameter `password` which is a string')
     }
 
-    details.password = details.password.trim().toLowerCase();
-    details.username = details.username.trim().toLowerCase();
+    details.password = details.password.trim().toLowerCase()
+    details.username = details.username.trim().toLowerCase()
 
-    var result;
+    let result
 
     try {
       result = await User.authenticate({
         username: details.username,
         password: details.password
-      });
+      })
     } catch (e) {
-      return callback(e.toString());
+      return callback(e.toString())
     }
 
     if (!result) {
-      return callback('No matching account found');
+      return callback('No matching account found')
     }
 
     // Set the details on the socket.
-    socket.authenticated = true;
-    socket.username = result.username;
-    socket.email = result.email;
-    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.email).digest('hex');
+    socket.authenticated = true
+    socket.username = result.username
+    socket.email = result.email
+    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.email).digest('hex')
 
     // Set the user as present.
     Presence.upsert(socket.id, {
       username: socket.username
-    });
-    socket.present = true;
+    })
+    socket.present = true
 
-    Presence.list(function(users) {
+    Presence.list(function (users) {
       socket.emit('login', {
         numUsers: users.length
-      });
+      })
 
       // echo globally (all clients) that a person has connected
       io.emit('user joined', {
         username: socket.username,
         avatar: socket.avatar,
         numUsers: users.length
-      });
-    });
+      })
+    })
 
     return callback(null, {
       username: socket.username,
       avatar: socket.avatar
-    });
-  });
+    })
+  })
 
-  socket.on('anonymous user', function(callback) {
+  socket.on('anonymous user', function (callback) {
     if (!_.isFunction(callback)) {
-      return;
+      return
     }
 
-    socket.authenticated = true;
-    socket.username = 'anonymous_' + crypto.randomBytes(3).toString('hex');
-    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.username).digest('hex') + '?d=retro';
+    socket.authenticated = true
+    socket.username = 'anonymous_' + crypto.randomBytes(3).toString('hex')
+    socket.avatar = 'https://www.gravatar.com/avatar/' + crypto.createHash('md5').update(socket.username).digest('hex') + '?d=retro'
 
     // Set the user as present.
     Presence.upsert(socket.id, {
       username: socket.username
-    });
-    socket.present = true;
+    })
+    socket.present = true
 
-    Presence.list(function(users) {
+    Presence.list(function (users) {
       socket.emit('login', {
         numUsers: users.length
-      });
+      })
 
       // echo globally (all clients) that a person has connected
       io.emit('user joined', {
         username: socket.username,
         avatar: socket.avatar,
         numUsers: users.length
-      });
-    });
+      })
+    })
 
     return callback(null, {
       username: socket.username,
       avatar: socket.avatar
-    });
-  });
+    })
+  })
 
   // when the client emits 'typing', we broadcast it to others
-  socket.on('typing', function(room) {
+  socket.on('typing', function (room) {
     if (!socket.authenticated) {
-      return;
+      return
     }
 
     socket.broadcast.emit('typing', {
-      room: room,
+      room,
       username: socket.username,
       avatar: socket.avatar
-    });
-  });
+    })
+  })
 
   // when the client emits 'stop typing', we broadcast it to others
-  socket.on('stop typing', function(room) {
+  socket.on('stop typing', function (room) {
     if (!socket.authenticated) {
-      return;
+      return
     }
 
     socket.broadcast.emit('stop typing', {
-      room: room,
+      room,
       username: socket.username
-    });
-  });
+    })
+  })
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', function() {
+  socket.on('disconnect', function () {
     if (socket.authenticated) {
-      Presence.remove(socket.id);
+      Presence.remove(socket.id)
 
-      Presence.list(function(users) {
+      Presence.list(function (users) {
         // echo globally (all clients) that a person has left
         socket.broadcast.emit('user left', {
           username: socket.username,
           avatar: socket.avatar,
           numUsers: users.length
-        });
-      });
+        })
+      })
     }
-  });
-});
-
-module.exports = server;
+  })
+})

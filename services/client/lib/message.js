@@ -1,16 +1,7 @@
-var AWS = require('aws-sdk');
-var crypto = require('crypto');
-var _ = require('lodash');
-var config = require('./config');
-
-function Message() {
-  this.dynamoDB = new AWS.DynamoDB.DocumentClient({
-    region: config.REGION,
-    endpoint: config.DYNAMODB_ENDPOINT
-  });
-  this.tableName = `${config.ENV_NAME}_Messages`;
-}
-module.exports = new Message();
+import crypto from 'crypto'
+import _ from 'lodash'
+import config from './config.js'
+import * as DB from './db.js'
 
 /**
   * Add a message to a room
@@ -22,12 +13,12 @@ module.exports = new Message();
   *   @param {object} message.content
   *   @param {Date} message.time
 **/
-Message.prototype.add = async function(message) {
+export const add = async function (message) {
   try {
-    var id = message.time + ':' + crypto.randomBytes(7).toString('hex');
+    const id = message.time + ':' + crypto.randomBytes(7).toString('hex')
 
-    await this.dynamoDB.put({
-      TableName: this.tableName,
+    await DB.put({
+      TableName: config.MESSAGE_TABLE,
       Item: {
         room: message.room,
         username: message.username,
@@ -36,15 +27,15 @@ Message.prototype.add = async function(message) {
         time: message.time,
         message: id
       }
-    }).promise();
+    })
 
-    return id;
+    return id
   } catch (e) {
-    console.error(e);
+    console.error(e)
 
-    throw new Error('Failed to insert new user in database');
+    throw new Error('Failed to insert new user in database')
   }
-};
+}
 
 /**
   * Fetch a list of the messages in a room
@@ -53,12 +44,12 @@ Message.prototype.add = async function(message) {
   *   @param {string} where.room
   *   @param {string} where.message
 **/
-Message.prototype.listFromRoom = async function(where) {
-  var messages;
+export const listFromRoom = async function (where) {
+  let messages
 
   try {
-    messages = await this.dynamoDB.query({
-      TableName: this.tableName,
+    messages = await DB.query({
+      TableName: config.MESSAGE_TABLE,
       KeyConditionExpression: 'room = :room',
       Limit: 20,
       ExpressionAttributeValues: {
@@ -66,16 +57,16 @@ Message.prototype.listFromRoom = async function(where) {
       },
       ExclusiveStartKey: where.message ? where : undefined,
       ScanIndexForward: false // Always return newest items first
-    }).promise();
+    })
   } catch (e) {
-    console.error(e);
+    console.error(e)
 
-    throw e;
+    throw e
   }
 
   return {
     next: _.get(messages, 'LastEvaluatedKey'),
-    messages: messages.Items.map(function(message) {
+    messages: messages.Items.map(function (message) {
       return {
         message: message.message,
         avatar: message.avatar,
@@ -83,7 +74,7 @@ Message.prototype.listFromRoom = async function(where) {
         content: JSON.parse(message.content),
         time: message.time,
         room: message.room
-      };
+      }
     })
-  };
-};
+  }
+}

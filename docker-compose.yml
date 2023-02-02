@@ -43,7 +43,7 @@ services:
     environment:
       LOCAL: "true"
       ENV_NAME: test
-      REDIS_ENDPOINT: redis
+      REDIS_ENDPOINT: redis://redis:6379
       DYNAMODB_ENDPOINT: http://dynamodb-local:8000
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -59,3 +59,4 @@ services:
     build: ./services/test-suite
     environment:
       SELF_URL: http://client:3000
+      WS_URL: ws://client:3000

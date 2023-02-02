@@ -1,12 +1,4 @@
-var config = require('./config');
-import { redis } from './lib/redis.js';
-
-function Presence() {
-  this.client = redis.createClient({
-    host: config.REDIS_ENDPOINT
-  });
-}
-module.exports = new Presence();
+import { redis } from './redis.js'
 
 /**
   * Remember a present user with their connection ID
@@ -14,14 +6,14 @@ module.exports = new Presence();
   * @param {string} connectionId - The ID of the connection
   * @param {object} meta - Any metadata about the connection
 **/
-Presence.prototype.upsert = async function(connectionId, meta) {
-  await this.client.hSet('presence', connectionId,
+export const upsert = async function (connectionId, meta) {
+  await redis.hSet('presence', connectionId,
     JSON.stringify({
-      meta: meta,
+      meta,
       when: Date.now()
     })
-  );
-};
+  )
+}
 
 /**
   * Remove a presence. Used when someone disconnects
@@ -29,49 +21,48 @@ Presence.prototype.upsert = async function(connectionId, meta) {
   * @param {string} connectionId - The ID of the connection
   * @param {object} meta - Any metadata about the connection
 **/
-Presence.prototype.remove = async function(connectionId) {
-  await this.client.hDel('presence', connectionId);
-};
+export const remove = async function (connectionId) {
+  await redis.hDel('presence', connectionId)
+}
 
 /**
   * Returns a list of present users, minus any expired
   *
   * @param {function} returnPresent - callback to return the present users
 **/
-Presence.prototype.list = async function(returnPresent) {
-  var active = [];
-  var dead = [];
-  var now = Date.now();
-  var self = this;
+export const list = async function (returnPresent) {
+  const active = []
+  const dead = []
+  const now = Date.now()
 
-  const presence = await this.client.hGetAll('presence');
+  const presence = await redis.hGetAll('presence')
 
-  for (var connection in presence) {
-    var details = JSON.parse(presence[connection]);
-    details.connection = connection;
+  for (const connection in presence) {
+    const details = JSON.parse(presence[connection])
+    details.connection = connection
 
     if (now - details.when > 8000) {
-      dead.push(details);
+      dead.push(details)
     } else {
-      active.push(details);
+      active.push(details)
     }
   }
 
   if (dead.length) {
-    self._clean(dead);
+    clean(dead)
   }
 
-  return returnPresent(active);
-};
+  return returnPresent(active)
+}
 
 /**
   * Cleans a list of connections by removing expired ones
   *
   * @param
 **/
-Presence.prototype._clean = function(toDelete) {
-  console.log(`Cleaning ${toDelete.length} expired presences`);
-  for (var presence of toDelete) {
-    this.remove(presence.connection);
+const clean = function (toDelete) {
+  console.log(`Cleaning ${toDelete.length} expired presences`)
+  for (const presence of toDelete) {
+    remove(presence.connection)
   }
-};
+}

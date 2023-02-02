@@ -7,4 +7,4 @@ build:
 
 test:
 	docker compose up -d --build --remove-orphans --scale test=0
-	docker-compose run --no-deps test
+	docker-compose up --build --no-deps test

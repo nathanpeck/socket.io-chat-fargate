@@ -1,16 +1,8 @@
-var AWS = require('aws-sdk');
-var bcrypt = require('bcrypt');
-var config = require('./config');
+import config from './config.js'
+import bcrypt from 'bcrypt'
+import * as DB from './db.js'
 
-function User() {
-  this.saltRounds = 10;
-  this.dynamoDB = new AWS.DynamoDB.DocumentClient({
-    region: config.REGION,
-    endpoint: config.DYNAMODB_ENDPOINT
-  });
-  this.tableName = `${config.ENV_NAME}_Users`;
-}
-module.exports = new User();
+const SALT_ROUNDS = 10
 
 /**
   * Get a user by their username
@@ -18,24 +10,24 @@ module.exports = new User();
   * @param {string} username - Username of the user
   * @param {string} password - The user's password
 **/
-User.prototype.fetchByUsername = async function(username) {
-  let details = null;
+export const fetchByUsername = async function (username) {
+  let details = null
 
   try {
-    details = await this.dynamoDB.get({
-      TableName: this.tableName,
+    details = await DB.get({
+      TableName: config.USER_TABLE,
       Key: {
-        username: username
+        username
       }
-    }).promise();
+    })
   } catch (e) {
-    console.error(e);
+    console.error(e)
 
-    throw new Error('Failed to lookup user by username');
+    throw new Error('Failed to lookup user by username')
   }
 
-  return details.Item;
-};
+  return details.Item
+}
 
 /**
   * Create a new user with given details
@@ -45,39 +37,39 @@ User.prototype.fetchByUsername = async function(username) {
   *   @param {string} details.email
   *   @param {string} details.password
 **/
-User.prototype.create = async function(details) {
-  const existingAccount = await this.fetchByUsername(details.username);
+export const create = async function (details) {
+  const existingAccount = await fetchByUsername(details.username)
 
   if (existingAccount) {
-    throw new Error('That username is taken already.');
+    throw new Error('That username is taken already.')
   }
 
-  let passwordHash = null;
+  let passwordHash = null
 
   try {
-    passwordHash = await bcrypt.hash(details.password, this.saltRounds);
+    passwordHash = await bcrypt.hash(details.password, SALT_ROUNDS)
   } catch (e) {
-    console.error(e);
-    throw e;
+    console.error(e)
+    throw e
   }
 
   try {
-    await this.dynamoDB.put({
-      TableName: this.tableName,
+    await DB.put({
+      TableName: config.USER_TABLE,
       Item: {
         username: details.username,
         email: details.email,
-        passwordHash: passwordHash
+        passwordHash
       }
-    }).promise();
+    })
   } catch (e) {
-    console.error(e);
+    console.error(e)
 
-    throw new Error('Failed to insert new user in database');
+    throw new Error('Failed to insert new user in database')
   }
 
-  return 'Success';
-};
+  return 'Success'
+}
 
 /**
   * Authenticate a user who submits their username and plaintext password
@@ -86,21 +78,21 @@ User.prototype.create = async function(details) {
   *   @param {string} details.username
   *   @param {string} details.password
 **/
-User.prototype.authenticate = async function(details) {
-  const account = await this.fetchByUsername(details.username);
+export const authenticate = async function (details) {
+  const account = await fetchByUsername(details.username)
 
   if (!account) {
-    throw new Error('No matching account found');
+    throw new Error('No matching account found')
   }
 
-  const passed = await bcrypt.compare(details.password, account.passwordHash);
+  const passed = await bcrypt.compare(details.password, account.passwordHash)
 
   if (passed) {
     return {
       username: account.username,
       email: account.email
-    };
+    }
   }
 
-  return false;
-};
+  return false
+}
