@@ -33,12 +33,7 @@ const store = {
     search: {
       searching: false,
       searchTerm: '',
-      searchResults: [
-        'This is a test message',
-        'Another message returning a test response',
-        'Test me out!',
-        'Hmm, this is a test'
-      ]
+      searchResults: []
     }
   },
 
@@ -222,10 +217,11 @@ Vue.component('searcher', {
           <input type="text" placeholder="Enter search..." v-model='searchTerm' @input="onChange" autocomplete="off" >
           <div class="icon"><i class="fa fa-search"></i></div>
           <div class="resultBox">
-            <ul>
-              <template v-for='(result, index) in searchResults'>
-                <li class="results" :key="index" v-html="textBoldSearchTerm(result)"></li>
-              </template>
+                <div class="message" v-for="(message, index) of searchResults" :index="message.message" :key="message.message">
+                  <span class='sender'>{{ message.username }}</span>
+                  <img :src="message.avatar" />
+                  <p v-html="textBoldSearchTerm(message.content.text)"></p>
+                </div>
             </ul>
           </div>
         </div>
@@ -244,18 +240,35 @@ Vue.component('searcher', {
     closeSearch: function () {
       console.log('Closing searcher')
       this.searching = false;
+      this.searchTerm = '';
+      this.searchResults = [];
     },
 
     onChange: function () {
       console.log('Searching term ', this.searchTerm)
 
       // Make network request here
-      this.searchResults = [
-        'This is a test message',
-        'Another message returning a test response',
-        'Test me out!',
-        'Hmm, this is a test'
-      ]
+      this.searchResults = [{
+        username: 'Marceline',
+        avatar: 'https://www.gravatar.com/avatar/3bf43d16dedfc155a52744d98345f57b?d=retro',
+        content: {
+          text: 'Serverless containers are amazing'
+        }
+      },
+      {
+        username: 'Bubblegum',
+        avatar: 'https://www.gravatar.com/avatar/6bdc7d0a02f6b91a9e1404e7c99da339?d=retro',
+        content: {
+          text: 'I use serverless functions in every application I build'
+        }
+      },
+      {
+        username: 'Bubblegum',
+        avatar: 'https://www.gravatar.com/avatar/6bdc7d0a02f6b91a9e1404e7ca9da339?d=retro',
+        content: {
+          text: 'What about serverless containers in Lambda?'
+        }
+      }]
     }
   }
 })

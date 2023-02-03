@@ -636,31 +636,6 @@ div.overlay {
   overflow-y: auto;
 }
 
-.searchInput.active .resultBox {
-  padding: 10px 8px;
-  opacity: 1;
-  /*pointer-events: auto;*/
-}
-
-.resultBox li {
-  list-style: none;
-  padding: 8px 12px;
-  width: 100%;
-  cursor: pointer;
-  border-radius: 3px;
-  color: #32465a;
-  pointer-events: auto;
-  display: block;
-}
-
-.searchInput.active .resultBox li {
-  display: block;
-}
-
-.resultBox li:hover {
-  background: #efefef;
-}
-
 .searchInput .icon {
   position: absolute;
   right: 0px;
@@ -680,4 +655,52 @@ div.overlay {
 
 b {
   font-weight: bold;
+}
+
+
+.searcher .message {
+  padding: 10px;
+  padding-bottom: 15px;
+  display: inline-block;
+  width: 100%;
+  font-size: 0.9em;
+  border-bottom: 1px solid #ebebeb;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.searcher .message:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.searcher .message:hover {
+  background: #ffd6b9;
+}
+
+.searcher .message img {
+  margin: 6px 8px 0 0;
+  width: 22px;
+  border-radius: 50%;
+  float: left;
+}
+
+.searcher .message p {
+  float: left;
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: calc(100% - 45px);
+  line-height: 130%;
+  word-wrap: break-word;
+  background-color: #ebebeb
+}
+
+.searcher .message .sender {
+  display: block;
+  clear: right;
+  padding: 2px 40px;
+  font-size: 0.8em;
+  font-color: #888888;
 }
