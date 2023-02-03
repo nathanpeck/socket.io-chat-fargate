@@ -28,7 +28,18 @@ const store = {
 
     rooms: [],
 
-    events: []
+    events: [],
+
+    search: {
+      searching: false,
+      searchTerm: '',
+      searchResults: [
+        'This is a test message',
+        'Another message returning a test response',
+        'Test me out!',
+        'Hmm, this is a test'
+      ]
+    }
   },
 
   // Mutate the data store to add a message
@@ -86,7 +97,7 @@ const store = {
     console.log('middle insert?')
     for (let i = 0; i < this.data.messages[message.room].length - 1; i++) {
       if (this.data.messages[message.room][i].time >= message.time &&
-          this.data.messages[message.room][i + 1].time <= message.time) {
+        this.data.messages[message.room][i + 1].time <= message.time) {
         this.data.messages[message.room].splice(i, 0, message)
         inserted = true
         break
@@ -148,7 +159,7 @@ const store = {
   removeTyper: function (typer) {
     for (let i = 0; i < this.data.typing.length; i++) {
       if (this.data.typing[i].username === typer.username &&
-          this.data.typing[i].room === typer.room) {
+        this.data.typing[i].room === typer.room) {
         this.data.typing.splice(i, 1)
         break
       }
@@ -186,21 +197,66 @@ const store = {
 }
 
 Vue.component('search', {
-  template: `<div class='search'>
+  template: `<div class='search' v-on:click='openSearch' v-if>
     <img src='./images/search.svg' alt="" class='search' />
     <p>Search</p>
 </div>
   </div>`,
   data: function () {
-    return store.data
+    return store.data.search
   },
   methods: {
-    switchRoom: function (roomId) {
-      store.switchRoom(roomId)
+    openSearch: function () {
+      console.log('Opening searcher')
+      this.searching = true;
     }
+  }
+})
+
+Vue.component('searcher', {
+  template: `
+  <div>
+    <div class='overlay' v-on:click='closeSearch' v-if='searching'></div>
+    <div class="searcher" v-if='searching'>
+        <div class="searchInput">
+          <input type="text" placeholder="Enter search..." v-model='searchTerm' @input="onChange" autocomplete="off" >
+          <div class="icon"><i class="fa fa-search"></i></div>
+          <div class="resultBox">
+            <ul>
+              <template v-for='(result, index) in searchResults'>
+                <li class="results" :key="index" v-html="textBoldSearchTerm(result)"></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`,
+  data: function () {
+    return store.data.search
   },
-  updated: function () {
-    console.log('updated rooms')
+  methods: {
+    textBoldSearchTerm: function (result) {
+      var searchRegExp = new RegExp(this.searchTerm, 'gi');
+      return result.replace(searchRegExp, `<b>$&</b>`)
+    },
+
+    closeSearch: function () {
+      console.log('Closing searcher')
+      this.searching = false;
+    },
+
+    onChange: function () {
+      console.log('Searching term ', this.searchTerm)
+
+      // Make network request here
+      this.searchResults = [
+        'This is a test message',
+        'Another message returning a test response',
+        'Test me out!',
+        'Hmm, this is a test'
+      ]
+    }
   }
 })
 
@@ -388,8 +444,8 @@ Vue.component('message-input', {
 
     startTyping: function (event) {
       if (!store.data.state.authenticated || event.keyCode === 13 ||
-          event.keyCode === 17 || event.keyCode === 18 || event.keyCode === 91 ||
-          event.keyCode === 92) {
+        event.keyCode === 17 || event.keyCode === 18 || event.keyCode === 91 ||
+        event.keyCode === 92) {
         return
       }
 
