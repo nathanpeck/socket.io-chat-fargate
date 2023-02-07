@@ -80,8 +80,11 @@ Resources:
               Value: production
             - Name: REDIS_ENDPOINT
               Value:
-                Fn::ImportValue:
-                  !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+                Fn::Join:
+                  - ''
+                  - - 'rss://'
+                    - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+                    - ':6379'
             - Name: DYNAMODB_ENDPOINT
               Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
@@ -102,7 +105,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - HTTPRule
-      - HTTPSRule
+      # - HTTPSRule
     Properties:
       ServiceName: !Ref 'ServiceName'
       Cluster:
@@ -175,19 +178,19 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTP']]
       Priority: !Ref 'Priority'
-  HTTPSRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'TargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values: [!Ref 'Path']
-      ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
-      Priority: !Ref 'Priority'
+  # HTTPSRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     Actions:
+  #       - TargetGroupArn: !Ref 'TargetGroup'
+  #         Type: 'forward'
+  #     Conditions:
+  #       - Field: path-pattern
+  #         Values: [!Ref 'Path']
+  #     ListenerArn:
+  #       Fn::ImportValue:
+  #         !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
+  #     Priority: !Ref 'Priority'
 
   # Enable autoscaling for this service
   ScalableTarget:

@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Redis, and any other resources that the chat app needs.
+Transform: AWS::LanguageExtensions
 Parameters:
   EnvironmentName:
     Type: String
@@ -113,12 +114,51 @@ Resources:
               - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
               - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
 
-  # A search collection for full text indexing of chat messages
+  # Describes how indexed chat messages are stored and encrypted
+  MessageCollectionSecurityPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name: 'chat-messages-security-policy'
+      Description: Control the security of the message collection
+      Type: encryption
+      Policy:
+        Fn::ToJsonString:
+          Rules:
+            - ResourceType: collection
+              Resource:
+                - "collection/chat-messages"
+          AWSOwnedKey: true
+
+  # Describes who can access the indexed chat messages, and how
+  # MessageCollectionAccessPolicy:
+  #   Type: AWS::OpenSearchServerless:AccessPolicy
+  #   Properties:
+  #     Name: 'chat-messages-access-policy'
+  #     Description: 'Who can access the indexed chat messages, and how'
+  #     Type: 'data'
+  #     Policy:
+  #       Fn::ToJsonString:
+  #         - Description: Access for Lambda function URL
+  #           Rules:
+  #             - ResourceType: collection
+  #               Resource:
+  #                 - collection/chat-messages
+  #               Permission: aoss:*
+  #             - ResourceType: index
+  #               Resource:
+  #                 - index/*/*
+  #               Permission: aoss:*
+  #           Principal: 'fake-arn'
+
+
+  # Describe the actual search index of chat messages
   MessageCollection:
     Type: AWS::OpenSearchServerless::Collection
+    DependsOn:
+      - MessageCollectionSecurityPolicy
     Properties:
       Description: 'Indexed collection of chat messages'
-      Name: 'ChatMessages'
+      Name: 'chat-messages'
       Type: SEARCH
 
   # A VPC endpoint allowing resources in the VPC to access the open search collection
@@ -132,13 +172,32 @@ Resources:
   MessageCollectionVpcEndpoint:
     Type: AWS::OpenSearchServerless::VpcEndpoint
     Properties:
-      Name: 'OpenSearchVpcEndpoint'
-      VpcId: !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'VPCId']]]
-      SubnetIdes:
-        - !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]]
-        - !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]]
+      Name: 'open-search-serverless-endpoint'
+      VpcId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+      SubnetIds:
+        - Fn::ImportValue:
+            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
+        - Fn::ImportValue:
+            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
       SecurityGroupIds:
         - !Ref 'OpenSearchServerlessAccess'
+  OpenSearchServerlessNetworkAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    Properties:
+      Name: access-chat-messages-in-vpc
+      Description: 'Allows accessing the chat messages collection via the VPC endpoint'
+      Type: 'network'
+      Policy:
+        Fn::ToJsonString:
+          - Description: Access via VPC endpoint
+            Rules:
+              - ResourceType: collection
+                Resource:
+                  - collection/chat-messages
+            SourceVPCEs:
+              - !Ref MessageCollectionVpcEndpoint
 
 Outputs:
   RedisEndpoint:
@@ -151,6 +210,6 @@ Outputs:
     Value: !GetAtt 'ChatServiceRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatServiceRole' ] ]
-  MessageCollectionEndpoint:
-    Description: The URL of the collection used to submit and search chat messages
-    Value: !GetAtt 'MessageCollection.CollectionEndpoint'
+  # MessageCollectionEndpoint:
+  #   Description: The URL of the collection used to submit and search chat messages
+  #   Value: !GetAtt 'MessageCollection.CollectionEndpoint'
