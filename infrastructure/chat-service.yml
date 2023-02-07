@@ -76,15 +76,25 @@ Resources:
           Environment:
             - Name: REGION
               Value: !Ref 'AWS::Region'
+            - Name: LOCAL
+              # This disables a redirect from HTTP to HTTPS, as HTTPS only works when you
+              # actually buy a domain and setup an SSL certificate
+              Value: true
             - Name: NODE_ENV
               Value: production
             - Name: REDIS_ENDPOINT
               Value:
                 Fn::Join:
                   - ''
-                  - - 'rss://'
+                  - - 'redis://'
                     - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
                     - ':6379'
+            - Name: USER_TABLE
+              Value:
+                Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'UsersTable']]
+            - Name: MESSAGE_TABLE
+              Value:
+                Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'MessagesTable']]
             - Name: DYNAMODB_ENDPOINT
               Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
             - Name: ENV_NAME
@@ -144,7 +154,7 @@ Resources:
       HealthCheckIntervalSeconds: 6
       HealthCheckPath: /
       Matcher:
-        HttpCode: 301
+        HttpCode: 200,301
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
