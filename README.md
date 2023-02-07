@@ -1,48 +1,64 @@
 # Fargate.chat
 
-[![app](./docs/images/running-app.png)](https://fargate.chat)
+Install if not already installed:
 
-A simple Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services, running in Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/).
-
-Features:
-
-- No EC2 instances. One of the goals of this application architecture is that it is very hands off, nothing to manage or update.
-- Fully defined as infrastructure as code, using [AWS CloudFormation](https://aws.amazon.com/cloudformation/) to create all the application resources.
-- CI/CD Pipeline using [AWS CodePipeline](https://aws.amazon.com/codepipeline/), so that you can just push to the Github and it will automatically deploy.
-- Automated Docker container builds using [AWS CodeBuild](https://aws.amazon.com/codebuild/)
-
-You can view a running copy of this app, deployed on AWS at: [fargate.chat](https://fargate.chat)
-
-## Deploy it yourself
-
-This repository includes [instructions for how to deploy this application yourself](./docs/deploy.md), including buying your own Route 53 domain name, creating an SSL certificate, setting up the CI/CD pipeline.
-
-## Run it locally
-
-To run the application on your local machine you need:
-
-- `docker`
-- `docker-compose`
-- `make`
-
-Execute the following command:
+* Docker: https://docs.docker.com/get-docker/
+* AWS SAM CLI: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
 
 ```
-make run
-```
+export AWS_REGION=us-west-2
 
-The application will be available at `http://localhost:3000`
+# Setup the base VPC and networking stuff.
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/cluster.yml \
+  --stack-name chat-cluster \
+  --capabilities CAPABILITY_IAM
 
-If you make changes to the code, you can run:
+# The shared resources like DynamoDB table and OpenSearch Serverless
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/resources.yml \
+  --stack-name chat-resources \
+  --capabilities CAPABILITY_IAM
 
-```
-make build
-```
+# Create an ECR repository to host the container image
+aws ecr create-repository \
+  --region $AWS_REGION \
+  --repository-name fargate-chat
 
-This updates the client application.
+# Login to the ECR repository
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 228578805541.dkr.ecr.us-west-2.amazonaws.com
 
-To run integration tests execute:
+# Build the Docker image
+docker build -t fargate-chat ./services/client
 
-```
-make test
+# Upload the built container image to the repository
+docker tag fargate-chat:latest 228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
+docker push 228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
+
+# Start up the container that runs in AWS Fargate
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/chat-service.yml \
+  --stack-name chat-service \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides ImageUrl=228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
+
+## Deploy the component which indexes sent chat messages
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/message-indexer.yml \
+  --stack-name chat-message-indexer \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM
+
+# Get the application URL to view it
+aws cloudformation describe-stacks \
+  --stack-name chat-cluster \
+  --query "Stacks[0].Outputs[?OutputKey==\`ExternalUrl\`].OutputValue" \
+  --output text
+
+# Open the resulting URL in the browser window
+
 ```

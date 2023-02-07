@@ -220,6 +220,11 @@ Outputs:
     Value: !Ref 'MessagesTable'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesTable' ] ]
+  MessagesTableStreamArn:
+    Description: The ARN of the message table stream
+    Value: !GetAtt 'MessagesTable.StreamArn'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesTableStreamArn' ] ]
   # MessageCollectionEndpoint:
   #   Description: The URL of the collection used to submit and search chat messages
   #   Value: !GetAtt 'MessageCollection.CollectionEndpoint'

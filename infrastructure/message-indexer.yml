@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An Amazon DynamoDB trigger that logs the updates made to a table.
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    Description: A name for the environment that this cloudformation will be part of.
+                 Used to locate other resources in the same environment.
+
+Resources:
+  DynamoDBProcessStreamFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: app.handler
+      Runtime: nodejs14.x
+      CodeUri: ../services/message-indexer
+      Description: An Amazon DynamoDB trigger that logs the updates made to a table.
+      MemorySize: 128
+      Timeout: 3
+      Events:
+        MyDynamoDBtable:
+          Type: DynamoDB
+          Properties:
+            Stream:
+              Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'MessagesTableStreamArn']]
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 100
