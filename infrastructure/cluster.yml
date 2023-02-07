@@ -195,8 +195,9 @@ Resources:
       LoadBalancerArn: !Ref 'PublicLoadBalancer'
       Port: 443
       Protocol: HTTPS
-      Certificates:
-        - CertificateArn: !Ref 'CertificateArn'
+      # Uncomment to add a SSL certificate for public facing app
+      #Certificates:
+      #  - CertificateArn: !Ref 'CertificateArn'
 
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the

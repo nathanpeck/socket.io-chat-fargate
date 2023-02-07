@@ -83,6 +83,8 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 10
         WriteCapacityUnits: 10
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   # A role for the service so it can access the tables
   ChatServiceRole:
@@ -111,6 +113,33 @@ Resources:
               - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
               - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
 
+  # A search collection for full text indexing of chat messages
+  MessageCollection:
+    Type: AWS::OpenSearchServerless::Collection
+    Properties:
+      Description: 'Indexed collection of chat messages'
+      Name: 'ChatMessages'
+      Type: SEARCH
+
+  # A VPC endpoint allowing resources in the VPC to access the open search collection
+  OpenSearchServerlessAccess:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "OpenSearch Security Group"
+      VpcId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+  MessageCollectionVpcEndpoint:
+    Type: AWS::OpenSearchServerless::VpcEndpoint
+    Properties:
+      Name: 'OpenSearchVpcEndpoint'
+      VpcId: !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'VPCId']]]
+      SubnetIdes:
+        - !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]]
+        - !ImportValue [!Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]]
+      SecurityGroupIds:
+        - !Ref 'OpenSearchServerlessAccess'
+
 Outputs:
   RedisEndpoint:
     Description: The endpoint of the redis cluster
@@ -122,4 +151,6 @@ Outputs:
     Value: !GetAtt 'ChatServiceRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatServiceRole' ] ]
-
+  MessageCollectionEndpoint:
+    Description: The URL of the collection used to submit and search chat messages
+    Value: !GetAtt 'MessageCollection.CollectionEndpoint'
