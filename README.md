@@ -53,7 +53,13 @@ sam deploy \
   --resolve-s3 \
   --capabilities CAPABILITY_IAM
 
-# TODO - Deploy the component which provides search autocomplete and API Gateway
+# Deploy the component which provides search autocomplete and API Gateway
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/message-search.yml \
+  --stack-name chat-message-search \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM
 
 # TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
 
