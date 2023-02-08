@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform:
   - 'AWS::Serverless-2016-10-31'
   - 'AWS::LanguageExtensions'
-Description: An Amazon DynamoDB trigger that logs the updates made to a table.
+Description: A Lambda function which fetches chat message search results from OpenSearch Serverless
 Parameters:
   EnvironmentName:
     Type: String
@@ -29,7 +29,7 @@ Resources:
     Properties:
       Handler: app.handler
       Runtime: nodejs14.x
-      CodeUri: ../services/message-indexer
+      CodeUri: ../services/message-search
       Description: An Amazon DynamoDB trigger that indexes messages in the messages table
       MemorySize: 128
       Timeout: 30
@@ -51,14 +51,14 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref ChatMessageSearchApi
-            Path: /
+            Path: /search
             Method: GET
 
   # Create the access policy which allows the IAM role of the Lambda function to use OpenSearch Serverless
   MessageCollectionAccessPolicy:
     Type: AWS::OpenSearchServerless::AccessPolicy
     Properties:
-      Name: 'chat-message-search-access-policy'
+      Name: 'chat-search-access-policy'
       Description: 'Who can access the indexed chat messages, and how'
       Type: 'data'
       Policy:

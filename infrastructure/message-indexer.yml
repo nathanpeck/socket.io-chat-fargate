@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform:
   - 'AWS::Serverless-2016-10-31'
   - 'AWS::LanguageExtensions'
-Description: An Amazon DynamoDB trigger that logs the updates made to a table.
+Description: A Lambda function that receives DynamoDB Stream updates from the chat message table
+             and indexes the chat messages in OpenSearch Serverless
 Parameters:
   EnvironmentName:
     Type: String

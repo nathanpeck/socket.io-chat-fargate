@@ -30,7 +30,21 @@ const client = new Client({
 exports.handler = async (event) => {
   console.log(event)
 
-  const searchTerm = 'index'
+  let searchTerm = ''
+
+  if (event.queryStringParameters && event.queryStringParameters.q) {
+    searchTerm = event.queryStringParameters.q
+  } else {
+    return {
+      isBase64Encoded: false,
+      statusCode: 200,
+      body: 'Expected query parameter `q` which is a string',
+      headers: {
+        'content-type': 'application/json'
+      }
+    }
+  }
+
   const INDEX_NAME = 'chat-messages'
 
   console.log(`Searching for search term ${searchTerm}`)
@@ -48,5 +62,31 @@ exports.handler = async (event) => {
     }
   })
 
-  console.log(response)
+  if (response.statusCode === 200) {
+    console.log(response.body.hits)
+
+    const answer = response.body.hits.hits.map(function (hit) {
+      return {
+        score: hit._score,
+        hit: {
+          room: hit._source.room,
+          message: hit._source.message,
+          avatar: hit._source.avatar,
+          content: {
+            text: hit._source.content
+          },
+          username: hit._source.username
+        }
+      }
+    })
+
+    return {
+      isBase64Encoded: false,
+      statusCode: 200,
+      body: JSON.stringify(answer),
+      headers: {
+        'content-type': 'application/json'
+      }
+    }
+  }
 }
