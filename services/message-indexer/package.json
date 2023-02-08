@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/credential-provider-node": "^3.266.1",
     "@opensearch-project/opensearch": "^2.2.0"
   }
 }

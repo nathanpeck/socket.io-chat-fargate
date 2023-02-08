@@ -5,7 +5,7 @@ const { AwsSigv4Signer } = require('@opensearch-project/opensearch/aws')
 
 const client = new Client({
   ...AwsSigv4Signer({
-    region: 'us-east-1',
+    region: process.env.AWS_REGION,
     service: 'aoss', // 'aoss' for OpenSearch Serverless
     // Must return a Promise that resolve to an AWS.Credentials object.
     // This function is used to acquire the credentials when the client start and
@@ -20,7 +20,7 @@ const client = new Client({
       return credentialsProvider()
     }
   }),
-  node: 'https://xxx.region.aoss.amazonaws.com'
+  node: process.env.MESSAGE_COLLECTION_ENDPOINT
 })
 
 /**
@@ -74,27 +74,58 @@ const client = new Client({
 }
  */
 
+// Global variable ensures that we don't have to check
+// for index existing on every single invoke, just the first
+let indexExists = false
+
 exports.handler = async (event) => {
-  // Lambda handler code
-  console.log(JSON.stringify(event, 0, null))
+  const INDEX_NAME = 'chat-messages'
 
-  console.log('Adding document:')
+  if (!indexExists) {
+    console.log('Ensuring index exists')
+    indexExists = await client.indices.exists({
+      index: INDEX_NAME
+    })
 
-  const document = {
-    title: 'The Outsider',
-    author: 'Stephen King',
-    year: '2018',
-    genre: 'Crime fiction'
+    if (!indexExists) {
+      try {
+        const settings = {
+          settings: {
+            index: {
+              number_of_shards: 4,
+              number_of_replicas: 2
+            }
+          }
+        }
+
+        const response = await client.indices.create({
+          index: INDEX_NAME,
+          body: settings
+        })
+        console.log(response.body)
+      } catch (e) {
+        console.log(e)
+      }
+    }
   }
 
-  const id = '1'
+  console.log('Adding messages to index')
 
-  const response = await client.index({
-    id,
-    index: index_name,
-    body: document,
-    refresh: true
-  })
-
-  console.log(response.body)
+  // TODO: Rewrite this to use the bulk API for faster performance:
+  // https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/bulk_examples.html
+  for (const record of event.Records) {
+    const response = await client.index({
+      id: record.dynamodb.Keys.room.S + ':' + record.dynamodb.Keys.message.S,
+      index: INDEX_NAME,
+      body: {
+        room: record.dynamodb.Keys.room.S,
+        message: record.dynamodb.Keys.message.S,
+        avatar: record.dynamodb.NewImage.avatar.S,
+        time: record.dynamodb.NewImage.time.S,
+        content: JSON.parse(record.dynamodb.NewImage.content.S).text,
+        username: record.dynamodb.NewImage.username.S
+      }
+    })
+    console.log(response)
+  }
 }

@@ -129,28 +129,6 @@ Resources:
                 - "collection/chat-messages"
           AWSOwnedKey: true
 
-  # Describes who can access the indexed chat messages, and how
-  # MessageCollectionAccessPolicy:
-  #   Type: AWS::OpenSearchServerless:AccessPolicy
-  #   Properties:
-  #     Name: 'chat-messages-access-policy'
-  #     Description: 'Who can access the indexed chat messages, and how'
-  #     Type: 'data'
-  #     Policy:
-  #       Fn::ToJsonString:
-  #         - Description: Access for Lambda function URL
-  #           Rules:
-  #             - ResourceType: collection
-  #               Resource:
-  #                 - collection/chat-messages
-  #               Permission: aoss:*
-  #             - ResourceType: index
-  #               Resource:
-  #                 - index/*/*
-  #               Permission: aoss:*
-  #           Principal: 'fake-arn'
-
-
   # Describe the actual search index of chat messages
   MessageCollection:
     Type: AWS::OpenSearchServerless::Collection
@@ -225,6 +203,13 @@ Outputs:
     Value: !GetAtt 'MessagesTable.StreamArn'
     Export:
       Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesTableStreamArn' ] ]
-  # MessageCollectionEndpoint:
-  #   Description: The URL of the collection used to submit and search chat messages
-  #   Value: !GetAtt 'MessageCollection.CollectionEndpoint'
+  MessageCollectionEndpoint:
+    Description: The URL of the collection used to submit and search chat messages
+    Value: !GetAtt 'MessageCollection.CollectionEndpoint'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+  OpenSearchServerlessGroupId:
+    Description: The security group that authorizes communication to open search serverless
+    Value: !GetAtt OpenSearchServerlessAccess.GroupId
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'OpenSearchServerlessGroupId' ] ]

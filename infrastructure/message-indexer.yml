@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: 'AWS::Serverless-2016-10-31'
+Transform:
+  - 'AWS::Serverless-2016-10-31'
+  - 'AWS::LanguageExtensions'
 Description: An Amazon DynamoDB trigger that logs the updates made to a table.
 Parameters:
   EnvironmentName:
@@ -9,15 +11,36 @@ Parameters:
                  Used to locate other resources in the same environment.
 
 Resources:
-  DynamoDBProcessStreamFunction:
+  ChatMessageIndexerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Chat message indexer security group"
+      VpcId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+
+  ChatMessageIndexer:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: app.handler
       Runtime: nodejs14.x
       CodeUri: ../services/message-indexer
-      Description: An Amazon DynamoDB trigger that logs the updates made to a table.
+      Description: An Amazon DynamoDB trigger that indexes messages in the messages table
       MemorySize: 128
-      Timeout: 3
+      Timeout: 30
+      Environment:
+        Variables:
+          MESSAGE_COLLECTION_ENDPOINT:
+            Fn::ImportValue:
+              !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref ChatMessageIndexerSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue:
+              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
+          - Fn::ImportValue:
+              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
       Events:
         MyDynamoDBtable:
           Type: DynamoDB
@@ -26,3 +49,47 @@ Resources:
               Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'MessagesTableStreamArn']]
             StartingPosition: TRIM_HORIZON
             BatchSize: 100
+
+  # Create the access policy which allows the IAM role of the Lambda function to use OpenSearch Serverless
+  MessageCollectionAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    Properties:
+      Name: 'chat-message-access-policy'
+      Description: 'Who can access the indexed chat messages, and how'
+      Type: 'data'
+      Policy:
+        Fn::ToJsonString:
+          - Description: Access for Lambda function URL
+            Rules:
+              - ResourceType: collection
+                Resource:
+                  - collection/chat-messages
+                Permission:
+                  - aoss:CreateCollectionItems
+                  - aoss:DeleteCollectionItems
+                  - aoss:UpdateCollectionItems
+                  - aoss:DescribeCollectionItems
+              - ResourceType: index
+                Resource:
+                  - index/chat-messages/*
+                Permission:
+                  - aoss:CreateIndex
+                  - aoss:DeleteIndex
+                  - aoss:UpdateIndex
+                  - aoss:DescribeIndex
+                  - aoss:ReadDocument
+                  - aoss:WriteDocument
+            Principal:
+              - !GetAtt ChatMessageIndexerRole.Arn
+
+  # Create the network access policy which allows the Lambda function to talk to collection
+  ChatIndexerAccessToOpenSearchServerless:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !GetAtt 'ChatMessageIndexerSecurityGroup.GroupId'
+      GroupId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
