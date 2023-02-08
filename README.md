@@ -45,7 +45,7 @@ sam deploy \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides ImageUrl=228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
 
-## Deploy the component which indexes sent chat messages
+# IN PROGRESS - Deploy the component which indexes sent chat messages
 sam deploy \
   --region $AWS_REGION \
   --template-file infrastructure/message-indexer.yml \
@@ -53,12 +53,16 @@ sam deploy \
   --resolve-s3 \
   --capabilities CAPABILITY_IAM
 
+# TODO - Deploy the component which provides search autocomplete and API Gateway
+
+# TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
+
 # Get the application URL to view it
 aws cloudformation describe-stacks \
   --stack-name chat-cluster \
   --query "Stacks[0].Outputs[?OutputKey==\`ExternalUrl\`].OutputValue" \
   --output text
 
-# Open the resulting URL in the browser window
+# Open the URL in the browser window
 
 ```
