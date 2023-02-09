@@ -248,9 +248,20 @@ Vue.component('searcher', {
 
     onChange: function () {
       console.log('Searching term ', this.searchTerm)
+      var self = this;
 
       // Make network request here
-      this.searchResults = [{
+      const http = new XMLHttpRequest();
+      const url = `search?q=${this.searchTerm}`;
+      http.open("GET", url);
+      http.send();
+
+      http.onreadystatechange = (e) => {
+        var results = JSON.parse(http.responseText);
+        self.searchResults = results.map((result) => { return result.hit })
+      }
+
+      /*this.searchResults = [{
         username: 'Marceline',
         avatar: 'https://www.gravatar.com/avatar/3bf43d16dedfc155a52744d98345f57b?d=retro',
         content: {
@@ -270,7 +281,7 @@ Vue.component('searcher', {
         content: {
           text: 'What about serverless containers in Lambda?'
         }
-      }]
+      }]*/
     }
   }
 })

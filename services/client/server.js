@@ -27,6 +27,20 @@ if (!process.env.LOCAL) {
 // The static paths
 app.use(express.static('public'))
 
+// A mocked up saerch endpoint
+app.get('/search', (req, res) => {
+  res.status(200).send([{
+    score: 1,
+    hit: {
+      username: 'Backend system message',
+      avatar: 'https://www.gravatar.com/avatar/3bf43d16dedfc155a52744d98345f57b?d=retro',
+      content: {
+        text: `Search endpoint not connected yet. You searched for '${req.query.q}'`
+      }
+    }
+  }])
+})
+
 // The Socket.io features on top of the HTTP server
 const io = new Server(server, {
   pingInterval: config.HEARTBEAT_INTERVAL,
