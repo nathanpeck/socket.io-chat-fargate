@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A CloudFront distribution that glues the separate
+             services together into one website
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    Description: A name for the environment that this cloudformation will be part of.
+
+Resources:
+
+  # Describes what to cache and for how long
+  ChatAppCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: 'chat-app-default'
+        DefaultTTL: 10
+        MaxTTL: 10
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: whitelist
+            QueryStrings:
+              - q
+
+  # Describes the different origins and how to map incoming
+  # traffic to different origin servers
+  ChatAppDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        DefaultRootObject: 'index.html'
+        Enabled: true
+        Origins:
+          - Id: 'fargate-app'
+            DomainName:
+              Fn::ImportValue:
+                !Join [':', [!Ref 'EnvironmentName', 'ExternalDnsName']]
+            CustomOriginConfig:
+              OriginProtocolPolicy: 'http-only'
+              OriginKeepaliveTimeout: 60
+          - Id: 'search-gateway'
+            DomainName: '959gb72dhd.execute-api.us-west-2.amazonaws.com'
+            CustomOriginConfig:
+              OriginProtocolPolicy: 'https-only'
+              OriginKeepaliveTimeout: 60
+        DefaultCacheBehavior:
+          CachePolicyId: !Ref ChatAppCachePolicy
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: 'fargate-app'
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: '/search*'
+            TargetOriginId: 'search-gateway'
+            CachePolicyId: !Ref ChatAppCachePolicy
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true

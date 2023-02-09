@@ -62,6 +62,12 @@ sam deploy \
   --capabilities CAPABILITY_IAM
 
 # TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/cloudfront.yml \
+  --stack-name chat-cloudfront \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM
 
 # Get the application URL to view it
 aws cloudformation describe-stacks \
