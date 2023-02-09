@@ -53,11 +53,14 @@ exports.handler = async (event) => {
     index: INDEX_NAME,
     body: {
       query: {
-        match_phrase_prefix: {
-          content: {
-            query: searchTerm,
-            slop: 3
-          }
+        "multi_match": {
+          "query": searchTerm,
+          "type": "bool_prefix",
+          "fields": [
+            "content",
+            "content._2gram",
+            "content._3gram"
+          ]
         }
       }
     }
