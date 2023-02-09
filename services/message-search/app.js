@@ -54,7 +54,7 @@ exports.handler = async (event) => {
     body: {
       query: {
         match_phrase_prefix: {
-          text_entry: {
+          content: {
             query: searchTerm,
             slop: 3
           }

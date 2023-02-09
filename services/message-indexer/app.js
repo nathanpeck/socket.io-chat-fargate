@@ -113,6 +113,15 @@ exports.handler = async (event) => {
                   ]
                 }
               }
+            },
+            "mappings": {
+              "properties": {
+                "content": {
+                  "type": "text",
+                  "analyzer": "autocomplete",
+                  "search_analyzer": "standard"
+                }
+              }
             }
           }
         }

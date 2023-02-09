@@ -52,7 +52,7 @@ Resources:
           - Id: 'search-gateway'
             DomainName:
               Fn::Join:
-                - '/'
+                - ''
                 - - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ChatMessageSearchId']]
                   - '.execute-api.'
                   - !Ref "AWS::Region"
@@ -79,3 +79,10 @@ Resources:
             CachePolicyId: !Ref ChatAppCachePolicy
             ViewerProtocolPolicy: redirect-to-https
             Compress: true
+
+Outputs:
+  PublicURL:
+    Description: The name of the ECS cluster
+    Value: !GetAtt ChatAppDistribution.DomainName
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicURL' ] ]

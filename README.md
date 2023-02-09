@@ -4,10 +4,16 @@ Install if not already installed:
 
 * Docker: https://docs.docker.com/get-docker/
 * AWS SAM CLI: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
+* Install Node and NPM if not present
 
 ```
-export AWS_REGION=us-west-2
+# Setup some env variables for later
+export AWS_REGION=us-east-2
 export AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+
+# Install the dependencies off of NPM
+(cd services/message-indexer; npm install)
+(cd services/message-search; npm install)
 
 # Setup the base VPC and networking stuff.
 sam deploy \
@@ -72,10 +78,22 @@ sam deploy \
 
 # Get the application URL to view it
 aws cloudformation describe-stacks \
-  --stack-name chat-cluster \
-  --query "Stacks[0].Outputs[?OutputKey==\`ExternalUrl\`].OutputValue" \
+  --stack-name chat-cloudfront \
+  --query "Stacks[0].Outputs[?OutputKey==\`PublicURL\`].OutputValue" \
   --output text
 
 # Open the URL in the browser window
 
+```
+
+
+## Extra admin stuff
+
+```
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/message-index-drop.yml \
+  --stack-name chat-index-drop \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM
 ```

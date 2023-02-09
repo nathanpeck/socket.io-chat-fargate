@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform:
+  - 'AWS::Serverless-2016-10-31'
+  - 'AWS::LanguageExtensions'
+Description: A Lambda function that receives DynamoDB Stream updates from the chat message table
+             and indexes the chat messages in OpenSearch Serverless
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    Description: A name for the environment that this cloudformation will be part of.
+                 Used to locate other resources in the same environment.
+
+Resources:
+  ChatMessageDropperSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Chat message dropper security group"
+      VpcId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+
+  ChatMessageDropper:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: app.handler
+      Runtime: nodejs14.x
+      CodeUri: ../services/message-index-drop
+      Description: Drop the chat message search index
+      MemorySize: 128
+      Timeout: 30
+      Environment:
+        Variables:
+          MESSAGE_COLLECTION_ENDPOINT:
+            Fn::ImportValue:
+              !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref ChatMessageDropperSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue:
+              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
+          - Fn::ImportValue:
+              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+
+  # Create the access policy which allows the IAM role of the Lambda function to use OpenSearch Serverless
+  MessageCollectionAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    Properties:
+      Name: 'chat-dropper-access-policy'
+      Description: 'Who can access the indexed chat messages, and how'
+      Type: 'data'
+      Policy:
+        Fn::ToJsonString:
+          - Description: Access for Lambda function URL
+            Rules:
+              - ResourceType: collection
+                Resource:
+                  - collection/chat-messages
+                Permission:
+                  - aoss:CreateCollectionItems
+                  - aoss:DeleteCollectionItems
+                  - aoss:UpdateCollectionItems
+                  - aoss:DescribeCollectionItems
+              - ResourceType: index
+                Resource:
+                  - index/chat-messages/*
+                Permission:
+                  - aoss:CreateIndex
+                  - aoss:DeleteIndex
+                  - aoss:UpdateIndex
+                  - aoss:DescribeIndex
+                  - aoss:ReadDocument
+                  - aoss:WriteDocument
+            Principal:
+              - !GetAtt ChatMessageDropperRole.Arn
+
+  # Create the network access policy which allows the Lambda function to talk to collection
+  ChatIndexerAccessToOpenSearchServerless:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !GetAtt 'ChatMessageDropperSecurityGroup.GroupId'
+      GroupId:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
