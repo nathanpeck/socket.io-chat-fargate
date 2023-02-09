@@ -7,6 +7,7 @@ Install if not already installed:
 
 ```
 export AWS_REGION=us-west-2
+export AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 
 # Setup the base VPC and networking stuff.
 sam deploy \
@@ -28,14 +29,14 @@ aws ecr create-repository \
   --repository-name fargate-chat
 
 # Login to the ECR repository
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 228578805541.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
 
 # Build the Docker image
 docker build -t fargate-chat ./services/client
 
 # Upload the built container image to the repository
-docker tag fargate-chat:latest 228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
-docker push 228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
+docker tag fargate-chat:latest $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/fargate-chat:latest
+docker push $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/fargate-chat:latest
 
 # Start up the container that runs in AWS Fargate
 sam deploy \
@@ -43,7 +44,7 @@ sam deploy \
   --template-file infrastructure/chat-service.yml \
   --stack-name chat-service \
   --capabilities CAPABILITY_IAM \
-  --parameter-overrides ImageUrl=228578805541.dkr.ecr.us-west-2.amazonaws.com/fargate-chat:latest
+  --parameter-overrides ImageUrl=$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/fargate-chat:latest
 
 # IN PROGRESS - Deploy the component which indexes sent chat messages
 sam deploy \
