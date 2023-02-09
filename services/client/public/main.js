@@ -1,4 +1,6 @@
-const socket = io()
+const socket = io('', {
+  transports: ['websocket']
+})
 
 Vue.component('virtual-list', VirtualScrollList)
 

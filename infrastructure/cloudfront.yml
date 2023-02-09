@@ -15,7 +15,7 @@ Resources:
     Properties:
       CachePolicyConfig:
         Name: 'chat-app-default'
-        DefaultTTL: 10
+        DefaultTTL: 0
         MaxTTL: 10
         MinTTL: 0
         ParametersInCacheKeyAndForwardedToOrigin:
@@ -23,11 +23,17 @@ Resources:
             CookieBehavior: none
           EnableAcceptEncodingGzip: true
           HeadersConfig:
-            HeaderBehavior: none
+            HeaderBehavior: whitelist
+            Headers:
+              - Upgrade
+              - Connection
+              - Sec-WebSocket-Key
+              - Sec-WebSocket-Version
+              - Sec-WebSocket-Protocol
+              - Sec-WebSocket-Accept
+              - Sec-WebSocket-Extensions
           QueryStringsConfig:
-            QueryStringBehavior: whitelist
-            QueryStrings:
-              - q
+            QueryStringBehavior: all
 
   # Describes the different origins and how to map incoming
   # traffic to different origin servers
@@ -51,6 +57,14 @@ Resources:
               OriginProtocolPolicy: 'https-only'
               OriginKeepaliveTimeout: 60
         DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
           CachePolicyId: !Ref ChatAppCachePolicy
           ViewerProtocolPolicy: redirect-to-https
           TargetOriginId: 'fargate-app'
