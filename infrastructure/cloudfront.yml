@@ -50,7 +50,13 @@ Resources:
               OriginProtocolPolicy: 'http-only'
               OriginKeepaliveTimeout: 60
           - Id: 'search-gateway'
-            DomainName: '959gb72dhd.execute-api.us-west-2.amazonaws.com'
+            DomainName:
+              Fn::Join:
+                - '/'
+                - - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ChatMessageSearchId']]
+                  - '.execute-api.'
+                  - !Ref "AWS::Region"
+                  - .amazonaws.com
             CustomOriginConfig:
               OriginProtocolPolicy: 'https-only'
               OriginKeepaliveTimeout: 60

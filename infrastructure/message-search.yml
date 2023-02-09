@@ -97,3 +97,10 @@ Resources:
       GroupId:
         Fn::ImportValue:
           !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
+
+Outputs:
+  ChatMessageSearchId:
+    Description: The DNS name of the chat message search API
+    Value: !GetAtt 'ChatMessageSearchApi.ApiId'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatMessageSearchId' ] ]
