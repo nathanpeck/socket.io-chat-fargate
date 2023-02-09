@@ -247,19 +247,34 @@ Vue.component('searcher', {
     },
 
     onChange: function () {
+      if (this.searchTerm.length < 2) {
+        this.searchResults = []
+        return; // Don't search until multiple characters have been entered
+      }
+
       console.log('Searching term ', this.searchTerm)
       var self = this;
 
       // Make network request here
-      const http = new XMLHttpRequest();
-      const url = `search?q=${this.searchTerm}`;
-      http.open("GET", url);
-      http.send();
-
-      http.onreadystatechange = (e) => {
-        var results = JSON.parse(http.responseText);
-        self.searchResults = results.map((result) => { return result.hit })
+      if (this.request) {
+        this.request.abort();
       }
+
+      this.request = new XMLHttpRequest();
+      const url = `search?q=${this.searchTerm}`;
+      this.request.onreadystatechange = (e) => {
+        let results;
+        try {
+          results = JSON.parse(this.request.responseText);
+          self.searchResults = results.map((result) => { return result.hit })
+        } catch (e) {
+          self.searchResults = []
+        }
+      }
+      this.request.open("GET", url);
+      this.request.send();
+
+
 
       /*this.searchResults = [{
         username: 'Marceline',
