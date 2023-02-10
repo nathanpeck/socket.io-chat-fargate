@@ -2,8 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform:
   - 'AWS::Serverless-2016-10-31'
   - 'AWS::LanguageExtensions'
-Description: A Lambda function that receives DynamoDB Stream updates from the chat message table
-             and indexes the chat messages in OpenSearch Serverless
+Description: A Lambda function used for admin purposes to drop the OpenSearch serverless collection
 Parameters:
   EnvironmentName:
     Type: String

@@ -39,7 +39,7 @@ services:
       - dynamodb-tables
     networks:
       - chat
-    build: ./services/client
+    build: ./services/socket
     environment:
       LOCAL: "true"
       ENV_NAME: test
@@ -52,6 +52,13 @@ services:
       AWS_SECRET_ACCESS_KEY: test
     ports:
       - 3000:3000
+
+  web:
+    networks:
+      - chat
+    build: ./services/web
+    ports:
+      - 3001:80
 
   # The test suite
   test:

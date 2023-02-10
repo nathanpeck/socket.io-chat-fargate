@@ -38,7 +38,7 @@ aws ecr create-repository \
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
 
 # Build the Docker image
-docker build -t fargate-chat ./services/client
+docker build -t fargate-chat ./services/socket
 
 # Upload the built container image to the repository
 docker tag fargate-chat:latest $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/fargate-chat:latest
@@ -68,6 +68,26 @@ sam deploy \
   --resolve-s3 \
   --capabilities CAPABILITY_IAM
 
+# Build the component which hosts static web content
+aws ecr create-repository \
+  --region $AWS_REGION \
+  --repository-name apprunner-web
+
+# Build the Docker image
+docker build -t apprunner-web ./services/web
+
+# Upload the built container image to the repository
+docker tag apprunner-web:latest $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/apprunner-web:latest
+docker push $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/apprunner-web:latest
+
+# Launch the web container inside of App Runner
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/web.yml \
+  --stack-name chat-web \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM
+
 # TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
 sam deploy \
   --region $AWS_REGION \
@@ -86,8 +106,23 @@ aws cloudformation describe-stacks \
 
 ```
 
+## Project layout
 
-## Extra admin stuff
+```
+/deps - Folder used only for local development purposes
+/infrastructure - CloudFormation templates used for deployment to AWS
+/services - Independent code components that make up the app
+  /socket - The core Node.js socket.io app, which runs in AWS Fargate
+  /message-indexer - Lambda function which triggers on DynamoDB updates, to index chat messages
+  /message-search - Lamdba function triggered by API Gateway, answers search queries
+  /test-suite - Container used for local tests, runs integ tests against socket service
+  /message-index-drop - Admin Lambda function which drops the OpenSearch Serverless collection
+  /web - Frontend service which serves the static web files in production
+```
+
+## Admin and dev actions
+
+If you want to drop the search index (will be recreated next time you send a message, though older messages will no longer be remembered)
 
 ```
 sam deploy \
@@ -96,4 +131,13 @@ sam deploy \
   --stack-name chat-index-drop \
   --resolve-s3 \
   --capabilities CAPABILITY_IAM
+```
+
+Run a local copy of the socket app for testing:
+
+```
+make run    # Standup local DynamoDB and local stack
+make test   # Rebuild and run tests locallt
+
+# Open localhost:3000 in browser to view app
 ```
