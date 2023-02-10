@@ -6,10 +6,12 @@ A Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](
 
 This application uses Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/), and [AWS App Runner](https://aws.amazon.com/apprunner/), as well as [AWS Lambda](https://aws.amazon.com/lambda/) functions.
 
-### Architecture goals
+### Architecture features
 
 - No EC2 instances. One of the goals of this application architecture is that it is very hands off, nothing to manage or update. Serverless features are turned on wherever possible.
 - Fully defined as infrastructure as code, using [AWS CloudFormation](https://aws.amazon.com/cloudformation/) to create all the application resources.
+- Included `docker-compose.yml` which stands up a local copy of DynamoDB, and local copy of the socket.io chat server. This allows you to develop locally and see the application at `http://localhost:3000`. The only feature that does not run locally, and is just simulated is the full text chat search.
+- Integration test suite container that you can run against a copy of the application, either locally or remotely.
 
 Read more about [the architecture and services in use](/docs).
 
@@ -164,7 +166,7 @@ Run a local copy of the socket app for testing:
 
 ```
 make run    # Standup local DynamoDB and local stack
-make test   # Rebuild and run tests locallt
+make test   # Rebuild and run tests locally
 
 # Open localhost:3000 in browser to view app
 ```
