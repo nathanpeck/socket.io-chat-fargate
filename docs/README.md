@@ -2,7 +2,7 @@
 
 ![app](./architecture.png)
 
-This is a chat application that demonstrates the usage of the following AWS compute service:
+This is a chat application that demonstrates the usage of the following AWS compute services:
 
 - AWS App Runner
 - AWS Elastic Container Service + AWS Fargate
