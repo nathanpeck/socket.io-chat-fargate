@@ -1,10 +1,12 @@
 # Fargate.chat
 
-![app](./docs/screenshot.png)
+[![app](./docs/screenshot.png)](d2z3y7t8tpzt39.cloudfront.net)
 
 A Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services.
 
 This application uses Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/), and [AWS App Runner](https://aws.amazon.com/apprunner/), as well as [AWS Lambda](https://aws.amazon.com/lambda/) functions.
+
+A sample version of the app is hosted at: https://d2z3y7t8tpzt39.cloudfront.net
 
 ### Architecture features
 
