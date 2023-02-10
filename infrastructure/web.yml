@@ -8,5 +8,45 @@ Parameters:
     Default: production
     Description: A name for the environment that this cloudformation will be part of.
                  Used to locate other resources in the same environment.
+  ImageUrl:
+    Type: String
+    Default: nginx
+    Description: The url of a docker image that contains the application process that
+                 will handle the traffic for this service. Should be on ECR private
 
 Resources:
+
+  # The role which allows App Runner to pull images from ECR
+  AppRunnerRole:
+    Type: AWS::IAM:Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2008-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+
+  # The App Runner deployment of the container image from ECR
+  ChatWeb:
+    Type: AWS::AppRunner::Service
+    Properties:
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !Ref AppRunnerRole
+        ImageRepository:
+          ImageRepositoryType: ECR
+          ImageIdentifier: !Ref ImageUrl
+          ImageConfiguration:
+            Port: 80
+
+Outputs:
+  WebEndpoint:
+    Description: The endpoint of the web server
+    Value: !GetAtt 'ChatWeb.ServiceUrl'
+    Export:
+      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'WebEndpoint' ] ]

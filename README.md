@@ -86,6 +86,7 @@ sam deploy \
   --template-file infrastructure/web.yml \
   --stack-name chat-web \
   --resolve-s3 \
+  --parameter-overrides ImageUrl=$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/apprunner-web:latest
   --capabilities CAPABILITY_IAM
 
 # TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
