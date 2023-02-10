@@ -42,7 +42,14 @@ Resources:
         DefaultRootObject: 'index.html'
         Enabled: true
         Origins:
-          - Id: 'fargate-app'
+          - Id: 'web-static'
+            DomainName:
+              Fn::ImportValue:
+                !Join [':', [!Ref 'EnvironmentName', 'WebEndpoint']]
+            CustomOriginConfig:
+              OriginProtocolPolicy: 'http-only'
+              OriginKeepaliveTimeout: 60
+          - Id: 'socket-app'
             DomainName:
               Fn::ImportValue:
                 !Join [':', [!Ref 'EnvironmentName', 'ExternalDnsName']]
@@ -60,6 +67,8 @@ Resources:
             CustomOriginConfig:
               OriginProtocolPolicy: 'https-only'
               OriginKeepaliveTimeout: 60
+        # Default behavior sends all static web traffic to the
+        # AppRunner hosted endpoint
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -71,11 +80,18 @@ Resources:
             - DELETE
           CachePolicyId: !Ref ChatAppCachePolicy
           ViewerProtocolPolicy: redirect-to-https
-          TargetOriginId: 'fargate-app'
+          TargetOriginId: 'web-static'
           Compress: true
         CacheBehaviors:
+          # Search traffic goes to API Gateway of the Lambda function
           - PathPattern: '/search*'
             TargetOriginId: 'search-gateway'
+            CachePolicyId: !Ref ChatAppCachePolicy
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+          # Socket.io traffic goes to the Fargate hosted container
+          - PathPattern: '/socket.io*'
+            TargetOriginId: 'socket-app'
             CachePolicyId: !Ref ChatAppCachePolicy
             ViewerProtocolPolicy: redirect-to-https
             Compress: true
