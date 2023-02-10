@@ -195,7 +195,7 @@ const store = {
 
 Vue.component('search', {
   template: `<div class='search' v-on:click='openSearch' v-if>
-    <img src='./images/search.svg' alt="" class='search' />
+    <img src='./static/images/search.svg' alt="" class='search' />
     <p>Search</p>
 </div>
   </div>`,
@@ -206,6 +206,11 @@ Vue.component('search', {
     openSearch: function () {
       console.log('Opening searcher')
       this.searching = true;
+
+      // Must wait for the field to appear first
+      Vue.nextTick(function () {
+        document.querySelector('#search-field').focus()
+      })
     }
   }
 })
@@ -216,7 +221,7 @@ Vue.component('searcher', {
     <div class='overlay' v-on:click='closeSearch' v-if='searching'></div>
     <div class="searcher" v-if='searching'>
         <div class="searchInput">
-          <input type="text" placeholder="Enter search..." v-model='searchTerm' @input="onChange" autocomplete="off" >
+          <input id='search-field' type="text" placeholder="Enter search..." v-model='searchTerm' @input="onChange" autocomplete="off">
           <div class="icon"><i class="fa fa-search"></i></div>
           <div class="resultBox">
                 <div class="message" v-for="(message, index) of searchResults" :index="message.message" :key="message.message">
@@ -235,8 +240,14 @@ Vue.component('searcher', {
   },
   methods: {
     textBoldSearchTerm: function (result) {
-      var searchRegExp = new RegExp(this.searchTerm, 'gi');
-      return result.replace(searchRegExp, `<b>$&</b>`)
+      var words = this.searchTerm.split(' ');
+      for (let word of words) {
+        if (word.length) {
+          var searchRegExp = new RegExp(word, 'gi');
+          result = result.replace(searchRegExp, `<b>$&</b>`)
+        }
+      }
+      return result;
     },
 
     closeSearch: function () {

@@ -95,29 +95,10 @@ exports.handler = async (event) => {
               number_of_shards: 4,
               number_of_replicas: 2
             },
-            "analysis": {
-              "filter": {
-                "autocomplete_filter": {
-                  "type": "edge_ngram",
-                  "min_gram": 1,
-                  "max_gram": 10
-                }
-              },
-              "analyzer": {
-                "autocomplete": {
-                  "type": "custom",
-                  "tokenizer": "standard",
-                  "filter": [
-                    "lowercase",
-                    "autocomplete_filter"
-                  ]
-                }
-              }
-            },
-            "mappings": {
-              "properties": {
-                "content": {
-                  "type": "search_as_you_type"
+            mappings: {
+              properties: {
+                content: {
+                  type: 'search_as_you_type'
                 }
               }
             }
@@ -140,6 +121,10 @@ exports.handler = async (event) => {
   // TODO: Rewrite this to use the bulk API for faster performance:
   // https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/bulk_examples.html
   for (const record of event.Records) {
+    if (!record.dynamodb.NewImage) {
+      continue;
+    }
+
     const response = await client.index({
       id: record.dynamodb.Keys.room.S + ':' + record.dynamodb.Keys.message.S,
       index: INDEX_NAME,

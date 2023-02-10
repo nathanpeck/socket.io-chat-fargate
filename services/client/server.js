@@ -138,7 +138,7 @@ io.on('connection', async function (socket) {
         id: 'general',
         name: 'Serverless is Awesome',
         preview: 'General serverless talk',
-        image: '/images/serverless.svg',
+        image: '/static/images/serverless.svg',
         status: 'none',
         onlineCount: 0
       },
@@ -146,7 +146,7 @@ io.on('connection', async function (socket) {
         id: 'fargate',
         name: 'AWS Fargate',
         preview: 'Serverless containers',
-        image: '/images/fargate.svg',
+        image: '/static/images/fargate.svg',
         status: 'none',
         onlineCount: 0
       },
@@ -154,7 +154,7 @@ io.on('connection', async function (socket) {
         id: 'lambda',
         name: 'AWS Lambda',
         preview: 'Serverless functions',
-        image: '/images/lambda.svg',
+        image: '/static/images/lambda.svg',
         status: 'none',
         onlineCount: 0
       },
@@ -162,7 +162,7 @@ io.on('connection', async function (socket) {
         id: 'ecs',
         name: 'Amazon Elastic Container Service',
         preview: 'Orchestrate serverless containers',
-        image: '/images/ecs.svg',
+        image: '/static/images/ecs.svg',
         status: 'none',
         onlineCount: 0
       }
