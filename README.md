@@ -1,6 +1,6 @@
 # Fargate.chat
 
-[![app](./docs/screenshot.png)](d2z3y7t8tpzt39.cloudfront.net)
+[![app](./docs/screenshot.png)](https://d2z3y7t8tpzt39.cloudfront.net)
 
 A Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services.
 
