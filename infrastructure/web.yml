@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform:
-  - 'AWS::LanguageExtensions'
-Description: An App Runner service that hosts and serves the static web content
+Description: A static web server hosted in AWS App Runner
 Parameters:
   EnvironmentName:
     Type: String
@@ -18,7 +16,7 @@ Resources:
 
   # The role which allows App Runner to pull images from ECR
   AppRunnerRole:
-    Type: AWS::IAM:Role
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2008-10-17'
