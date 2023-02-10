@@ -1,5 +1,30 @@
 # Fargate.chat
 
+![app](./docs/screenshot.png)
+
+A Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services.
+
+This application uses Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/), and [AWS App Runner](https://aws.amazon.com/apprunner/), as well as [AWS Lambda](https://aws.amazon.com/lambda/) functions.
+
+### Architecture goals
+
+- No EC2 instances. One of the goals of this application architecture is that it is very hands off, nothing to manage or update. Serverless features are turned on wherever possible.
+- Fully defined as infrastructure as code, using [AWS CloudFormation](https://aws.amazon.com/cloudformation/) to create all the application resources.
+
+Read more about [the architecture and services in use](/docs).
+
+### Application features
+
+- User account functionality, including anonymous accounts
+- Real time chat message sending over WebSocket protocol, with persistance in DynamoDB
+- Live user presence, including announcments when users join or leave
+- Unread message indicator
+- Typing indicator, including support for multiple typers at once.
+- Full text search for chat messages, powered by Amazon OpenSearch Serverless
+- Infinite virtual DOM scrolling, for performant feeling even when many thousands of messages have been sent in a room.
+
+### Setup instructions
+
 Install if not already installed:
 
 * Docker: https://docs.docker.com/get-docker/
@@ -8,6 +33,7 @@ Install if not already installed:
 
 ```
 # Setup some env variables for later
+# Can try other regions as long as all required services are in that region
 export AWS_REGION=us-east-2
 export AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 

@@ -1,5 +1,7 @@
 # Architecture
 
+![app](./docs/architecture.png)
+
 This is a chat application that demonstrates the usage of the following AWS compute service:
 
 - AWS App Runner
