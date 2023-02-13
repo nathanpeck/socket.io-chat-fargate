@@ -1,12 +1,12 @@
 # Fargate.chat
 
-[![app](./docs/screenshot.png)](https://d2z3y7t8tpzt39.cloudfront.net)
+[![app](./docs/screenshot.png)](https://fargate.chat)
 
 A Slack-like chat app built with [Node.js](https://nodejs.org/en/) and [Vue.js](https://vuejs.org/) and deployed using Amazon Web Services.
 
 This application uses Docker containers in [AWS Fargate](https://aws.amazon.com/fargate/), and [AWS App Runner](https://aws.amazon.com/apprunner/), as well as [AWS Lambda](https://aws.amazon.com/lambda/) functions.
 
-A sample version of the app is hosted at: https://d2z3y7t8tpzt39.cloudfront.net
+A sample version of the app is hosted at: https://fargate.chat
 
 ### Architecture features
 
@@ -119,7 +119,7 @@ sam deploy \
   --parameter-overrides ImageUrl=$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/apprunner-web:latest \
   --capabilities CAPABILITY_IAM
 
-# TODO - Deploy CloudFront distribution which ties main app and search endpoint together on one domain
+# Deploy CloudFront distribution which ties main app and search endpoint together on one domain
 sam deploy \
   --region $AWS_REGION \
   --template-file infrastructure/cloudfront.yml \
@@ -171,4 +171,16 @@ make run    # Standup local DynamoDB and local stack
 make test   # Rebuild and run tests locally
 
 # Open localhost:3000 in browser to view app
+```
+
+Launch the public facing CloudFormation stack with a custom domain name and SSL cert:
+
+```
+sam deploy \
+  --region $AWS_REGION \
+  --template-file infrastructure/cloudfront.yml \
+  --stack-name chat-cloudfront \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides DomainName=fargate.chat CertArn=arn:aws:acm:us-east-1:228578805541:certificate/45b4037a-2257-48ff-b3ae-b8e3e0523e85
 ```
