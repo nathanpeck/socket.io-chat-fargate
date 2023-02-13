@@ -27,6 +27,12 @@ Read more about [the architecture and services in use](/docs).
 - Full text search for chat messages, powered by Amazon OpenSearch Serverless
 - Infinite virtual DOM scrolling, for performant feeling even when many thousands of messages have been sent in a room.
 
+### Things to note in this app
+
+- Working configuration for routing WebSocket connections with Socket.io through CloudFront
+- Example of how to setup OpenSearch access policies for a Lambda function
+- Horizontally scalable Socket.io using the Redis adaptor and Amazon ElastiCache
+
 ### Setup instructions
 
 Install if not already installed:
