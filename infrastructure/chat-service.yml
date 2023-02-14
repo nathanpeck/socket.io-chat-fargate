@@ -85,11 +85,6 @@ Resources:
                 - 'redis://${RedisEndpointValue}:6379'
                 - RedisEndpointValue:
                     Fn::ImportValue: !Sub "${EnvironmentName}:RedisEndpoint"
-                # Fn::Join:
-                #   - ''
-                #   - - 'redis://'
-                #     - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
-                #     - ':6379'
             - Name: USER_TABLE
               Value:
                 Fn::ImportValue: !Sub "${EnvironmentName}:UsersTable"
