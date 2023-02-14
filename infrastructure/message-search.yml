@@ -21,8 +21,7 @@ Resources:
     Properties:
       GroupDescription: "Chat message indexer security group"
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
 
   ChatMessageSearch:
     Type: 'AWS::Serverless::Function'
@@ -36,16 +35,13 @@ Resources:
       Environment:
         Variables:
           MESSAGE_COLLECTION_ENDPOINT:
-            Fn::ImportValue:
-              !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+            Fn::ImportValue: !Sub "${EnvironmentName}:MessagesCollectionEndpoint"
       VpcConfig:
         SecurityGroupIds:
           - !Ref ChatMessageSearchSecurityGroup
         SubnetIds:
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
       Events:
         AllEvents:
           Type: HttpApi
@@ -95,12 +91,11 @@ Resources:
       ToPort: 65535
       SourceSecurityGroupId: !GetAtt 'ChatMessageSearchSecurityGroup.GroupId'
       GroupId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:OpenSearchServerlessGroupId"
 
 Outputs:
   ChatMessageSearchId:
     Description: The DNS name of the chat message search API
     Value: !GetAtt 'ChatMessageSearchApi.ApiId'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatMessageSearchId' ] ]
+      Name: !Sub '${EnvironmentName}:ChatMessageSearchId'

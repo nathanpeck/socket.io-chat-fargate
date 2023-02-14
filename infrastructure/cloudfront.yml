@@ -68,26 +68,22 @@ Resources:
         Origins:
           - Id: 'web-static'
             DomainName:
-              Fn::ImportValue:
-                !Join [':', [!Ref 'EnvironmentName', 'WebEndpoint']]
+              Fn::ImportValue: !Sub "${EnvironmentName}:WebEndpoint"
             CustomOriginConfig:
               OriginProtocolPolicy: 'https-only'
               OriginKeepaliveTimeout: 60
           - Id: 'socket-app'
             DomainName:
-              Fn::ImportValue:
-                !Join [':', [!Ref 'EnvironmentName', 'ExternalDnsName']]
+              Fn::ImportValue: !Sub "${EnvironmentName}:ExternalDnsName"
             CustomOriginConfig:
               OriginProtocolPolicy: 'http-only'
               OriginKeepaliveTimeout: 60
           - Id: 'search-gateway'
             DomainName:
-              Fn::Join:
-                - ''
-                - - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ChatMessageSearchId']]
-                  - '.execute-api.'
-                  - !Ref "AWS::Region"
-                  - .amazonaws.com
+              !Sub
+                - '${ChatMessageSearchValue}.execute-api.${AWS::Region}.amazonaws.com'
+                - ChatMessageSearchValue:
+                    Fn::ImportValue: !Sub '${EnvironmentName}:ChatMessageSearchId'
             CustomOriginConfig:
               OriginProtocolPolicy: 'https-only'
               OriginKeepaliveTimeout: 60
@@ -125,4 +121,4 @@ Outputs:
     Description: The name of the ECS cluster
     Value: !GetAtt ChatAppDistribution.DomainName
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'PublicURL' ] ]
+      Name: !Sub '${EnvironmentName}:PublicURL'

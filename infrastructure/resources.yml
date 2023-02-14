@@ -14,10 +14,8 @@ Resources:
     Properties:
       Description: Group of subnets to place Redis into
       SubnetIds:
-        - Fn::ImportValue:
-            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-        - Fn::ImportValue:
-            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+        - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+        - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
 
   # Security group to add the Redis cluster to the VPC,
   # and to allow the Fargate containers to talk to Redis on port 6379
@@ -26,8 +24,8 @@ Resources:
     Properties:
       GroupDescription: "Redis Security Group"
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
+
   RedisIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -37,8 +35,7 @@ Resources:
       FromPort: 6379
       ToPort: 6379
       SourceSecurityGroupId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'FargateContainerSecurityGroup']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:FargateContainerSecurityGroup"
 
   # The cluster itself.
   Redis:
@@ -55,7 +52,7 @@ Resources:
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Join ['_', [!Ref 'EnvironmentName', 'Users']]
+      TableName: !Sub '${EnvironmentName}_Users'
       AttributeDefinitions:
         - AttributeName: username
           AttributeType: S
@@ -70,7 +67,7 @@ Resources:
   MessagesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Join ['_', [!Ref 'EnvironmentName', 'Messages']]
+      TableName: !Sub '${EnvironmentName}_Messages'
       AttributeDefinitions:
         - AttributeName: room
           AttributeType: S
@@ -111,8 +108,8 @@ Resources:
               - "dynamodb:UpdateItem"
               - "dynamodb:DeleteItem"
             Resource:
-              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'UsersTable']]
-              - !Join ['', ['arn:aws:dynamodb:*:*:table/', !Ref 'MessagesTable']]
+              - !Sub 'arn:aws:dynamodb:*:*:table/${UsersTable}'
+              - !Sub 'arn:aws:dynamodb:*:*:table/${MessagesTable}'
 
   # Describes how indexed chat messages are stored and encrypted
   MessageCollectionSecurityPolicy:
@@ -145,20 +142,17 @@ Resources:
     Properties:
       GroupDescription: "OpenSearch Security Group"
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
+
   MessageCollectionVpcEndpoint:
     Type: AWS::OpenSearchServerless::VpcEndpoint
     Properties:
       Name: 'open-search-serverless-endpoint'
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
       SubnetIds:
-        - Fn::ImportValue:
-            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-        - Fn::ImportValue:
-            !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+        - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+        - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
       SecurityGroupIds:
         - !Ref 'OpenSearchServerlessAccess'
   OpenSearchServerlessNetworkAccessPolicy:
@@ -182,34 +176,34 @@ Outputs:
     Description: The endpoint of the redis cluster
     Value: !GetAtt 'Redis.RedisEndpoint.Address'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'RedisEndpoint' ] ]
+      Name: !Sub "${EnvironmentName}:RedisEndpoint"
   ChatServiceRole:
     Description: The role of the chat service
     Value: !GetAtt 'ChatServiceRole.Arn'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'ChatServiceRole' ] ]
+      Name: !Sub "${EnvironmentName}:ChatServiceRole"
   UsersTable:
     Description: The name of the user table
     Value: !Ref 'UsersTable'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'UsersTable' ] ]
+      Name: !Sub "${EnvironmentName}:UsersTable"
   MessagesTable:
     Description: The name of the message table
     Value: !Ref 'MessagesTable'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesTable' ] ]
+      Name: !Sub "${EnvironmentName}:MessagesTable"
   MessagesTableStreamArn:
     Description: The ARN of the message table stream
     Value: !GetAtt 'MessagesTable.StreamArn'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesTableStreamArn' ] ]
+      Name: !Sub "${EnvironmentName}:MessagesTableStreamArn"
   MessageCollectionEndpoint:
     Description: The URL of the collection used to submit and search chat messages
     Value: !GetAtt 'MessageCollection.CollectionEndpoint'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+      Name: !Sub "${EnvironmentName}:MessagesCollectionEndpoint"
   OpenSearchServerlessGroupId:
     Description: The security group that authorizes communication to open search serverless
     Value: !GetAtt OpenSearchServerlessAccess.GroupId
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'OpenSearchServerlessGroupId' ] ]
+      Name: !Sub "${EnvironmentName}:OpenSearchServerlessGroupId"

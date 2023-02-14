@@ -17,8 +17,7 @@ Resources:
     Properties:
       GroupDescription: "Chat message indexer security group"
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
 
   ChatMessageIndexer:
     Type: 'AWS::Serverless::Function'
@@ -32,22 +31,19 @@ Resources:
       Environment:
         Variables:
           MESSAGE_COLLECTION_ENDPOINT:
-            Fn::ImportValue:
-              !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+            Fn::ImportValue: !Sub "${EnvironmentName}:MessagesCollectionEndpoint"
       VpcConfig:
         SecurityGroupIds:
           - !Ref ChatMessageIndexerSecurityGroup
         SubnetIds:
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
       Events:
         MyDynamoDBtable:
           Type: DynamoDB
           Properties:
             Stream:
-              Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'MessagesTableStreamArn']]
+              Fn::ImportValue: !Sub "${EnvironmentName}:MessagesTableStreamArn"
             StartingPosition: TRIM_HORIZON
             BatchSize: 100
 
@@ -92,5 +88,4 @@ Resources:
       ToPort: 65535
       SourceSecurityGroupId: !GetAtt 'ChatMessageIndexerSecurityGroup.GroupId'
       GroupId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
+        Fn::ImportValue: !Sub '${EnvironmentName}:OpenSearchServerlessGroupId'

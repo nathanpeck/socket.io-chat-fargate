@@ -88,7 +88,7 @@ sam deploy \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides ImageUrl=$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/fargate-chat:latest
 
-# IN PROGRESS - Deploy the component which indexes sent chat messages
+# Deploy the component which indexes sent chat messages
 sam deploy \
   --region $AWS_REGION \
   --template-file infrastructure/message-indexer.yml \

@@ -47,4 +47,4 @@ Outputs:
     Description: The endpoint of the web server
     Value: !GetAtt 'ChatWeb.ServiceUrl'
     Export:
-      Name: !Join [ ':', [ !Ref 'EnvironmentName', 'WebEndpoint' ] ]
+      Name: !Sub '${EnvironmentName}:WebEndpoint'

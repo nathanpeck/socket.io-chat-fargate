@@ -49,7 +49,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['-', [!Ref 'EnvironmentName', 'service', !Ref 'ServiceName']]
+      LogGroupName: !Sub "${EnvironmentName}-service-${ServiceName}"
 
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
@@ -63,11 +63,9 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ECSTaskExecutionRole']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:ECSTaskExecutionRole"
       TaskRoleArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ChatServiceRole']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:ChatServiceRole"
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
@@ -83,20 +81,23 @@ Resources:
             - Name: NODE_ENV
               Value: production
             - Name: REDIS_ENDPOINT
-              Value:
-                Fn::Join:
-                  - ''
-                  - - 'redis://'
-                    - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
-                    - ':6379'
+              Value: !Sub
+                - 'redis://${RedisEndpointValue}:6379'
+                - RedisEndpointValue:
+                    Fn::ImportValue: !Sub "${EnvironmentName}:RedisEndpoint"
+                # Fn::Join:
+                #   - ''
+                #   - - 'redis://'
+                #     - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'RedisEndpoint']]
+                #     - ':6379'
             - Name: USER_TABLE
               Value:
-                Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'UsersTable']]
+                Fn::ImportValue: !Sub "${EnvironmentName}:UsersTable"
             - Name: MESSAGE_TABLE
               Value:
-                Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'MessagesTable']]
+                Fn::ImportValue: !Sub "${EnvironmentName}:MessagesTable"
             - Name: DYNAMODB_ENDPOINT
-              Value: !Join ['.', ['https://dynamodb', !Ref 'AWS::Region', 'amazonaws.com']]
+              Value: !Sub 'https://dynamodb.${AWS::Region}.amazonaws.com'
             - Name: ENV_NAME
               Value: !Ref 'EnvironmentName'
           PortMappings:
@@ -104,7 +105,7 @@ Resources:
           LogConfiguration:
             LogDriver: 'awslogs'
             Options:
-              awslogs-group: !Join ['-', [!Ref 'EnvironmentName', 'service', !Ref 'ServiceName']]
+              awslogs-group: !Sub "${EnvironmentName}-service-${ServiceName}"
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: !Ref 'ServiceName'
 
@@ -119,8 +120,7 @@ Resources:
     Properties:
       ServiceName: !Ref 'ServiceName'
       Cluster:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -130,13 +130,10 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'EnvironmentName', 'FargateContainerSecurityGroup']]
+            - Fn::ImportValue: !Sub "${EnvironmentName}:FargateContainerSecurityGroup"
           Subnets:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+            - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+            - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
       TaskDefinition: !Ref 'TaskDefinition'
       LoadBalancers:
         - ContainerName: !Ref 'ServiceName'
@@ -159,7 +156,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       TargetType: ip
-      Name: !Join ['-', [!Ref 'EnvironmentName', !Ref 'ServiceName']]
+      Name: !Sub "${EnvironmentName}-${ServiceName}"
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
@@ -169,12 +166,10 @@ Resources:
         - Key: deregistration_delay.timeout_seconds
           Value: 30
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
 
-  # Create rules to forward both HTTP and HTTPS traffic to the service's
-  # target group. The service itself will handle redirecting HTTP traffic
-  # to HTTPS
+  # Create rules to forward HTTP traffic to the service's
+  # target group.
   HTTPRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -185,22 +180,8 @@ Resources:
         - Field: path-pattern
           Values: [!Ref 'Path']
       ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTP']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:PublicListenerHTTP"
       Priority: !Ref 'Priority'
-  # HTTPSRule:
-  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
-  #   Properties:
-  #     Actions:
-  #       - TargetGroupArn: !Ref 'TargetGroup'
-  #         Type: 'forward'
-  #     Conditions:
-  #       - Field: path-pattern
-  #         Values: [!Ref 'Path']
-  #     ListenerArn:
-  #       Fn::ImportValue:
-  #         !Join [':', [!Ref 'EnvironmentName', 'PublicListenerHTTPS']]
-  #     Priority: !Ref 'Priority'
 
   # Enable autoscaling for this service
   ScalableTarget:
@@ -210,11 +191,10 @@ Resources:
       ServiceNamespace: 'ecs'
       ScalableDimension: 'ecs:service:DesiredCount'
       ResourceId:
-        Fn::Join:
-          - '/'
-          - - service
-            - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
-            - !Ref 'ServiceName'
+        !Sub
+          - 'service/${ClusterNameValue}/${ServiceName}'
+          - ClusterNameValue:
+              Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       MinCapacity: 2
       MaxCapacity: 10
       RoleARN:
@@ -226,20 +206,13 @@ Resources:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     DependsOn: ScalableTarget
     Properties:
-      PolicyName:
-        Fn::Join:
-          - '/'
-          - - scale
-            - !Ref 'EnvironmentName'
-            - !Ref 'ServiceName'
-            - down
+      PolicyName: !Sub 'scale-${EnvironmentName}-${ServiceName}-down'
       PolicyType: StepScaling
       ResourceId:
-        Fn::Join:
-          - '/'
-          - - service
-            - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
-            - !Ref 'ServiceName'
+        !Sub
+          - 'service/${ClusterNameValue}/${ServiceName}'
+          - ClusterNameValue:
+              Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: 'ecs'
       StepScalingPolicyConfiguration:
@@ -254,20 +227,13 @@ Resources:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     DependsOn: ScalableTarget
     Properties:
-      PolicyName:
-        Fn::Join:
-          - '/'
-          - - scale
-            - !Ref 'EnvironmentName'
-            - !Ref 'ServiceName'
-            - up
+      PolicyName: !Sub 'scale-${EnvironmentName}-${ServiceName}-up'
       PolicyType: StepScaling
       ResourceId:
-        Fn::Join:
-          - '/'
-          - - service
-            - Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
-            - !Ref 'ServiceName'
+        !Sub
+          - 'service/${ClusterNameValue}/${ServiceName}'
+          - ClusterNameValue:
+              Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: 'ecs'
       StepScalingPolicyConfiguration:
@@ -288,19 +254,8 @@ Resources:
   LowCpuUsageAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName:
-        Fn::Join:
-          - '-'
-          - - low-cpu
-            - !Ref 'EnvironmentName'
-            - !Ref 'ServiceName'
-      AlarmDescription:
-        Fn::Join:
-          - ' '
-          - - "Low CPU utilization for service"
-            - !Ref 'ServiceName'
-            - "in stack"
-            - !Ref 'EnvironmentName'
+      AlarmName: !Sub 'low-cpu-${EnvironmentName}-${ServiceName}'
+      AlarmDescription: !Sub 'Low CPU utilization for service ${ServiceName} in environment ${EnvironmentName}'
       MetricName: CPUUtilization
       Namespace: AWS/ECS
       Dimensions:
@@ -308,7 +263,7 @@ Resources:
           Value: !Ref 'ServiceName'
         - Name: ClusterName
           Value:
-            Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
+            Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       Statistic: Average
       Period: 60
       EvaluationPeriods: 1
@@ -320,19 +275,8 @@ Resources:
   HighCpuUsageAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName:
-        Fn::Join:
-          - '-'
-          - - high-cpu
-            - !Ref 'EnvironmentName'
-            - !Ref 'ServiceName'
-      AlarmDescription:
-        Fn::Join:
-          - ' '
-          - - "High CPU utilization for service"
-            - !Ref 'ServiceName'
-            - "in stack"
-            - !Ref 'EnvironmentName'
+      AlarmName: !Sub 'high-cpu-${EnvironmentName}-${ServiceName}'
+      AlarmDescription: !Sub 'High CPU utilization for service ${ServiceName} in environment ${EnvironmentName}'
       MetricName: CPUUtilization
       Namespace: AWS/ECS
       Dimensions:
@@ -340,7 +284,7 @@ Resources:
           Value: !Ref 'ServiceName'
         - Name: ClusterName
           Value:
-            Fn::ImportValue: !Join [':', [!Ref 'EnvironmentName', 'ClusterName']]
+            Fn::ImportValue: !Sub "${EnvironmentName}:ClusterName"
       Statistic: Average
       Period: 60
       EvaluationPeriods: 1

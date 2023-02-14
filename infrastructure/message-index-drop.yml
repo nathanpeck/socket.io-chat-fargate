@@ -16,8 +16,7 @@ Resources:
     Properties:
       GroupDescription: "Chat message dropper security group"
       VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'VPCId']]
+        Fn::ImportValue: !Sub "${EnvironmentName}:VPCId"
 
   ChatMessageDropper:
     Type: 'AWS::Serverless::Function'
@@ -31,16 +30,13 @@ Resources:
       Environment:
         Variables:
           MESSAGE_COLLECTION_ENDPOINT:
-            Fn::ImportValue:
-              !Join [ ':', [ !Ref 'EnvironmentName', 'MessagesCollectionEndpoint' ] ]
+            Fn::ImportValue: !Sub "${EnvironmentName}:MessagesCollectionEndpoint"
       VpcConfig:
         SecurityGroupIds:
           - !Ref ChatMessageDropperSecurityGroup
         SubnetIds:
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetOne']]
-          - Fn::ImportValue:
-              !Join [':', [!Ref 'EnvironmentName', 'PublicSubnetTwo']]
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
+          - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
 
   # Create the access policy which allows the IAM role of the Lambda function to use OpenSearch Serverless
   MessageCollectionAccessPolicy:
@@ -83,5 +79,4 @@ Resources:
       ToPort: 65535
       SourceSecurityGroupId: !GetAtt 'ChatMessageDropperSecurityGroup.GroupId'
       GroupId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'EnvironmentName', 'OpenSearchServerlessGroupId']]
+        Fn::ImportValue: !Sub '${EnvironmentName}:OpenSearchServerlessGroupId'
