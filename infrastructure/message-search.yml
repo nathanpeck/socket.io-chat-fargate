@@ -95,7 +95,12 @@ Resources:
 
 Outputs:
   ChatMessageSearchId:
-    Description: The DNS name of the chat message search API
+    Description: The ID of the search API
     Value: !GetAtt 'ChatMessageSearchApi.ApiId'
     Export:
       Name: !Sub '${EnvironmentName}:ChatMessageSearchId'
+  MessageSearchEndpoint:
+    Description: The URL of the chat message search endpoint
+    Value: !GetAtt 'ChatMessageSearchApi.ApiEndpoint'
+    Export:
+      Name: !Sub '${EnvironmentName}:MessageSearchEndpoint'
