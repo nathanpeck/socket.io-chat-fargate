@@ -1,5 +1,46 @@
 <script setup>
+import { storeToRefs } from 'pinia'
+const { $useStore } = useNuxtApp()
+
+// Start out not logged in
 const authenticated = useState('authenticated', () => false)
+
+const { $socket } = useNuxtApp()
+
+// Fetch the room list
+const roomData = await new Promise(function (resolve, reject) {
+  $socket.emit('room list', function (err, responseRooms) {
+    if (err) {
+      reject(err)
+    }
+    resolve(responseRooms);
+  });
+});
+
+const store = $useStore()
+store.updateRooms(roomData);
+store.setActiveRoomById(roomData[0].id)
+
+const from = { room: store.activeRoom.id }
+const messageData = await new Promise(function (resolve, reject) {
+  $socket.emit(
+    'message list',
+    from,
+    function (err, response) {
+      if (err) [
+        reject(err)
+      ]
+
+      for (const message of response.messages) {
+        store.insertMessage(message);
+      }
+
+      store.scrollToBottom = true;
+
+      resolve()
+    }
+  )
+});
 </script>
 
 <template>

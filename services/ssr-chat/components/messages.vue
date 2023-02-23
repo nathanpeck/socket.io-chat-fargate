@@ -1,33 +1,64 @@
 <script setup>
-const currentUsername = useState('currentUsername', () => 'test')
-const activeMessages = useState('activeMessage', () => [
-  {
-    username: 'test',
-    avatar: 'https://www.gravatar.com/avatar/3a59977679d2616add79551c9f491b82?d=retro',
-    content: {
-      text: 'This is a test'
+import { useStore } from '~/store/state'
+import { storeToRefs } from 'pinia'
+import VirtualList from 'vue3-virtual-scroll-list'
+import ChatMessage from './chat-message.vue'
+
+const store = useStore()
+
+const {
+  activeMessages,
+  scrollToBottom
+} = storeToRefs(store)
+
+const chatMessage = ChatMessage;
+
+const vsl = ref(null)
+
+watchEffect(() => {
+  if (scrollToBottom.value) {
+    console.log('scrolling to bottom');
+    if (vsl.value) {
+      scrollToBottom.value = false;
+      nextTick(function () {
+        vsl.value.scrollToBottom();
+      })
     }
   }
-])
+})
+
+let oldHeight = 0;
+
+function loadMore() {
+  oldHeight = vsl.value.getScrollSize();
+  store.loadMoreInActiveRoom();
+}
+
+function scroll() {
+  scrollToBottom.value = false;
+}
 </script>
 
 <template>
-  <div id='messages-wrapper'>
-    <!--<virtual-list :size="50" :remain="8" :bench="44" class="list" :start="0" :totop='loadMore' :onscroll='scroll'>-->
-    <div class="list">
-      <div
-        :class="{ message: true, replies: message.username != currentUsername, sent: message.username == currentUsername }"
-        v-for="(message, index) of activeMessages" :index="message.message" :key="message.message">
-        <span class='sender'>{{ message.username }}</span>
-        <img :src="message.avatar" />
-        <p>{{ message.content.text }}</p>
-      </div>
+  <ClientOnly> <!-- The virtual scroll relies on window size, which does not exist in the server -->
+    <div id='messages-wrapper'>
+      <virtual-list :size="50" :remain="8" :bench="44" class="list" :start="0" @totop='loadMore' @scroll='scroll'
+        :data-key="'message'" :data-sources="activeMessages" :data-component="chatMessage" ref="vsl" />
+      <typing></typing>
     </div>
-
-    <typing></typing>
-    <!--</virtual-list>-->
-  </div>
+    <template #fallback>
+      Loading...
+    </template>
+  </ClientOnly>
 </template>
+
+<script>
+export default {
+  updated: function () {
+    console.log('updated messages wrapper')
+  }
+}
+</script>
 
 <style>
 #messages-wrapper {
@@ -36,15 +67,15 @@ const activeMessages = useState('activeMessage', () => [
 
 #messages-wrapper .list {
   height: auto;
-  min-height: calc(100% - 93px);
-  max-height: calc(100% - 93px);
+  min-height: calc(100vh - 93px);
+  max-height: calc(100vh - 93px);
   overflow-x: hidden;
   overflow-y: scroll;
 }
 
 @media screen and (max-width: 735px) {
   #messages-wrapper .list {
-    max-height: calc(100% - 105px);
+    max-height: calc(100vh - 105px);
   }
 }
 

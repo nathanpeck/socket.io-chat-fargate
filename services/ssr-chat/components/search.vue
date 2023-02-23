@@ -1,6 +1,6 @@
 <template>
   <div id='search' v-on:click='searching = true'>
-    <img src='@/images/search.svg' alt="" class='search' />
+    <img src='/static/images/search.svg' alt="" class='search' />
     <p>Search</p>
   </div>
 </template>

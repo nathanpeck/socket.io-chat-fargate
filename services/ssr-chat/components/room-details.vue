@@ -1,6 +1,13 @@
 <script setup>
-const rooms = useState('rooms')
-const activeRoom = useState('activeRoom')
+import { useStore } from '~/store/state'
+import { storeToRefs } from 'pinia'
+
+const store = useStore()
+
+const {
+  activeRoom
+} = storeToRefs(store)
+
 const presentCount = useState('presentCount', () => 0)
 const events = useState('events', () => [
   {

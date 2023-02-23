@@ -1,29 +1,27 @@
 <script setup>
-const roomData = [
-  {
-    status: 'none',
-    id: 'serverless',
-    image: 'images/serverless.svg',
-    name: 'Serverless is Awesome',
-    preview: 'All about serverless on AWS'
-  },
-  {
-    status: 'none',
-    id: 'fargate',
-    image: 'images/fargate.svg',
-    name: 'AWS Fargate',
-    preview: 'Serverless containers'
-  }
-]
+import { useStore } from '~/store/state'
+import { storeToRefs } from 'pinia'
 
-const rooms = useState('rooms', () => roomData)
-const activeRoom = useState('activeRoom', () => roomData[0])
+const store = useStore()
+
+// Get references to data in the store
+// which this component needs
+const {
+  rooms,
+  activeRoom,
+} = storeToRefs(store)
+
+// Get store methods that this component needs
+const {
+  setActiveRoomById
+} = store;
 </script>
 
 <template>
   <div id='rooms'>
     <ul>
-      <li class="room" v-on:click="activeRoom = room" :class="{ active: room.id == activeRoom.id }" v-for='room in rooms'>
+      <li class="room" v-on:click="setActiveRoomById(room.id);" :class="{ active: room.id == activeRoom.id }"
+        v-for='room in rooms'>
         <div class="wrap">
           <span class="room-status" v-if="room.status != 'none'" :class="room.status"></span>
           <img :src="room.image" alt="" />
@@ -170,10 +168,6 @@ const activeRoom = useState('activeRoom', () => roomData[0])
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  -moz-transition: 1s all ease;
-  -o-transition: 1s all ease;
-  -webkit-transition: 1s all ease;
-  transition: 1s all ease;
 }
 
 #rooms ul li.room .wrap .meta .preview span {

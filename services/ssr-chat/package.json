@@ -11,6 +11,10 @@
     "nuxt": "^3.2.2"
   },
   "dependencies": {
-    "bootstrap": "^5.2.3"
+    "@pinia/nuxt": "^0.4.7",
+    "bootstrap": "^5.2.3",
+    "pinia": "^2.0.32",
+    "socket.io-client": "^4.6.1",
+    "vue3-virtual-scroll-list": "^0.2.1"
   }
 }
