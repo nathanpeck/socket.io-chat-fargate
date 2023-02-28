@@ -158,7 +158,11 @@ describe('The API', function () {
       done()
     }
 
-    newSocket.emit('anonymous user', function (err, results) {
+    newSocket.emit('create user', {
+      username: 'test_' + new Date().getTime(),
+      email: 'testemail_' + new Date().getTime() + '@test.com',
+      password: 'bogus'
+    }, function (err, results) {
       expect(err).to.equal(null)
       expect(results).to.be.an('object')
 

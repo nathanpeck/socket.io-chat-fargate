@@ -26,7 +26,7 @@ export const fetchByUsername = async function (username) {
     throw new Error('Failed to lookup user by username')
   }
 
-  return details.Item
+  return details
 }
 
 /**
