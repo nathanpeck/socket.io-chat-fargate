@@ -37,6 +37,10 @@ function loadMore() {
 function scroll() {
   scrollToBottom.value = false;
 }
+
+function onUpdated() {
+  console.log('updated');
+}
 </script>
 
 <template>
