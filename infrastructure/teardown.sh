@@ -18,12 +18,12 @@ for (( i=0; i<${#stack_names[@]}; i++ ))
 do
 	stack_name=${stack_names[$i]}
 	# Check if stack exists
-	describe_output=$(aws cloudformation describe-stacks --stack-name "$stack_name" 2>&1)
+	describe_output=$(aws cloudformation describe-stacks --region $AWS_REGION --stack-name "$stack_name" 2>&1)
 	status=$?
 	if [ $status -eq 0 ]; then
 		# If stack exists, initiate deletion process
 		echo "Stack $(($i+1))/${#stack_names[@]} being deleted: $stack_name"
-		delete_output=$(aws cloudformation delete-stack --stack-name "$stack_name" 2>&1)
+		delete_output=$(aws cloudformation delete-stack --region $AWS_REGION --stack-name "$stack_name" 2>&1)
 		status=$?
 		if [ $status -eq 0 ]; then
 			# If deletion initiated, check deletion status
@@ -31,7 +31,7 @@ do
 			status_output=""
 			while [ "$status_output" != "DELETE_COMPLETE" ]
 			do
-				status_output=$(aws cloudformation describe-stacks --stack-name "$stack_name" --query "Stacks[0].StackStatus" --output text 2>&1)
+				status_output=$(aws cloudformation describe-stacks --region $AWS_REGION --stack-name "$stack_name" --query "Stacks[0].StackStatus" --output text 2>&1)
 				status=$?
 				if [ $status -ne 0 ]; then
 					# If error checking status, print error message and break loop
@@ -58,12 +58,12 @@ done
 for ecr_repo in "${ecr_repos[@]}"
 do
 	# Check if ECR repository exists
-	describe_output=$(aws ecr describe-repositories --repository-name "$ecr_repo" 2>&1)
+	describe_output=$(aws ecr describe-repositories --region $AWS_REGION --repository-name "$ecr_repo" 2>&1)
 	status=$?
 	if [ $status -eq 0 ]; then
 		# If ECR repository exists, initiate deletion process
 		echo "Deleting ECR repository: $ecr_repo"
-		delete_output=$(aws ecr delete-repository --repository-name "$ecr_repo" --force 2>&1)
+		delete_output=$(aws ecr delete-repository --region $AWS_REGION --repository-name "$ecr_repo" --force 2>&1)
 		status=$?
 		if [ $status -eq 0 ]; then
 			# If deletion successful, print message indicating ECR repository has been deleted
