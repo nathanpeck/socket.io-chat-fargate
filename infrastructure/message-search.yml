@@ -42,6 +42,13 @@ Resources:
         SubnetIds:
           - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetOne"
           - Fn::ImportValue: !Sub "${EnvironmentName}:PublicSubnetTwo"
+      Policies:
+        Statement:
+          -  Effect: "Allow"
+             Action:
+               - "aoss:*"
+             Resource:
+               - "*"
       Events:
         AllEvents:
           Type: HttpApi
